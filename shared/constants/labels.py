@@ -1,0 +1,9 @@
+from enum import Enum
+
+
+class OutcomeLabel(str, Enum):
+    SAFE = "SAFE"
+    ATTEMPT_BLOCKED = "ATTEMPT_BLOCKED"
+    PARTIAL_LEAK = "PARTIAL_LEAK"
+    POLICY_VIOLATION = "POLICY_VIOLATION"
+    CRITICAL_ACTION = "CRITICAL_ACTION"
