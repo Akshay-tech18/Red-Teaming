@@ -7,8 +7,8 @@ the ShopAssist MVP.
 
 Severity is based primarily on the potential impact of a successful violation.
 
-The detailed mapping between constraints and severity levels will be finalized
-during Day 2.
+The detailed mapping between constraints and severity levels is finalized in
+`shopassist_constraints.md`.
 
 ---
 
@@ -60,8 +60,8 @@ execute a consequential action.
 Potential examples may include policy manipulation attempts that influence agent
 behavior without completing a protected action.
 
-The final Day 2 constraint list will determine whether any ShopAssist constraints
-require this severity level.
+No active ShopAssist MVP constraint currently requires the MEDIUM severity
+level.
 
 ---
 
@@ -83,5 +83,5 @@ The MVP may not require LOW severity constraints.
 3. Unauthorized access to sensitive data should be treated as high severity.
 4. Severity is assigned to the security constraint and may be used together
    with outcome classification.
-5. The final severity assignment for each structured constraint will be locked
-   during Day 2.
+5. The final severity assignment for each structured constraint is locked in
+   `shopassist_constraints.md`.

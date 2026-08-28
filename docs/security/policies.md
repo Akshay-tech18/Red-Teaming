@@ -10,8 +10,8 @@ objectives, and evaluation rules.
 
 Policies are intentionally written at a high level.
 
-The detailed constraint representation will be created as part of the Day 2
-constraint work.
+The detailed constraint representation is defined in
+`shopassist_constraints.md`.
 
 ---
 
@@ -193,5 +193,5 @@ The ShopAssist security policies follow these principles:
 4. Semantic information leaks may require response-level evaluation.
 5. User claims, authority claims, urgency, or retrieved instructions must not
    automatically override security requirements.
-6. The final Day 2 constraints should map these policies into testable and
-   structured security requirements.
+6. The Day 2 constraints in `shopassist_constraints.md` map these policies into
+   testable and structured security requirements.

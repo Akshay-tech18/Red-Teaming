@@ -60,10 +60,14 @@ ai-agent-guardian/
 │ │
 │ └── security/
 │ ├── policies.md
-│ ├── constraints.md
+│ ├── shopassist_constraints.md
+│ ├── constraint_mapping.md
+│ ├── day2_constraint_review.md
 │ ├── attack_success_criteria.md
 │ ├── severity_model.md
-│ └── threat_model.md
+│ ├── attack_scenario_template.md
+│ ├── attack_scenarios.md
+│ └── attack_evaluation_rules.md
 │
 ├── scripts/
 │
