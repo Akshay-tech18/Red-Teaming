@@ -43,14 +43,20 @@ Attack
 
 ---
 
-## D-003 — Guaranteed Attack Families
+## D-003 — Primary Attack Families
 
-The following four attack families are guaranteed for the MVP:
+The following three attack families are required for the MVP (updated on Day 2
+to align with the constraint review):
 
 1. Authority Impersonation
 2. Tool Workflow Bypass
 3. Multi-Turn Manipulation
-4. Indirect Prompt Injection
+
+Primary constraint coverage:
+
+- Authority Impersonation: C-003, C-005, C-006
+- Tool Workflow Bypass: C-001, C-002, C-003
+- Multi-Turn Manipulation: C-003, C-005, C-008
 
 ---
 
@@ -58,10 +64,15 @@ The following four attack families are guaranteed for the MVP:
 
 The following attack families are optional:
 
-1. Context or Conflicting Instructions
-2. Data-Access Boundary Attacks
+1. Indirect Prompt Injection (deferred until an untrusted-content surface exists)
+2. Context or Conflicting Instructions
+3. Data-Access Boundary Attacks
 
-These will be considered only after the guaranteed attack families and the
+Indirect Prompt Injection is retained via governing constraint C-007, marked
+OPTIONAL / STRETCH in the Day 2 review because the current ShopAssist backend
+has no untrusted-content entry point.
+
+These will be considered only after the primary attack families and the
 adaptive retry/security evaluation flow are stable.
 
 ---
