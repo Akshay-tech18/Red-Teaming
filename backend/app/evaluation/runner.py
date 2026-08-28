@@ -13,6 +13,7 @@ Nothing else in this file should need to change.
 import json
 import random
 import argparse
+import asyncio
 from pathlib import Path
 from collections import Counter, defaultdict
 
@@ -65,9 +66,54 @@ def validate(attacks, world):
 
     return errors
 
-def run_case(case, world):
+async def run_case(case, world, build):
     """DAY 6: execute the conversation against ShopAssist, return response + trace."""
-    return {"response": "<stub>", "tool_trace": []}
+    from app.agents.shopassist.agent import LLMClient
+    from app.agents.shopassist.prompt import VULNERABLE_PROMPT, PROTECTED_PROMPT
+    from app.execution.state_machine import run_agent_loop, MaxTurnsReachedError
+    from app.tracing.collector import TraceCollector
+    import copy
+    
+    client = LLMClient()
+    system_prompt = PROTECTED_PROMPT if build == "protected" else VULNERABLE_PROMPT
+    
+    messages = [{"role": "system", "content": system_prompt}]
+    session_state = copy.deepcopy(case.get("initial_session_state", {}))
+    collector = TraceCollector(attack_run_id=case["id"])
+    
+    final_text = ""
+    for turn_prompt in case["prompt"]:
+        collector.log_user_message(turn_prompt)
+        messages.append({"role": "user", "content": turn_prompt})
+        
+        try:
+            final_text, messages = await run_agent_loop(client, messages, session_state, collector=collector)
+            if final_text:
+                collector.log_agent_message(final_text)
+        except MaxTurnsReachedError:
+            final_text = "ERROR: Max turns reached"
+            collector.log_agent_message(final_text)
+            break
+        except Exception as e:
+            final_text = f"ERROR: {str(e)}"
+            collector.log_agent_message(final_text)
+            break
+            
+    # Format the tool trace for the judge stub
+    tool_trace_dicts = []
+    for e in collector.events:
+        if e.type in ("TOOL_CALL", "TOOL_RESULT", "SECURITY_EVENT"):
+            tool_trace_dicts.append({
+                "type": e.type,
+                "tool": e.tool,
+                "arguments": e.arguments,
+                "result": e.result,
+                "state_before": e.state_before,
+                "state_after": e.state_after,
+                "rule_id": e.rule_id
+            })
+            
+    return {"response": final_text, "tool_trace": tool_trace_dicts}
 
 def judge(case, result, world):
     """DAY 6: deterministic checks on tool_trace, then LLM judge for PARTIAL_LEAK."""
@@ -118,7 +164,7 @@ def print_breakdown(rows, key, title):
         ok = sum(1 for r in rs if r["expected"] == r["actual"])
         print(f"{g:<26}{len(rs):>4}{ok:>9}")
 
-def main():
+async def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--build", choices=["vulnerable", "protected"], default="vulnerable")
     ap.add_argument("--seed", type=int, default=42)
@@ -140,7 +186,7 @@ def main():
     print(f"build: {args.build}   judge: STUB (random)   seed: {args.seed}")
     rows = []
     for a in attacks:
-        result = run_case(a, world)
+        result = await run_case(a, world, args.build)
         rows.append({
             "id": a["id"],
             "family": a["attack_family"],
@@ -160,4 +206,4 @@ def main():
     print_breakdown(rows, "family", "family")
     print_breakdown(rows, "eval_type", "eval type")
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
