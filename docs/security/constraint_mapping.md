@@ -557,12 +557,27 @@ HYBRID is not used as an evaluation type for any scored constraint.
 | ---------------------------------- | ------------------- |
 | Tool Workflow Bypass               | C-001, C-002        |
 | Authority Impersonation            | C-001, C-002        |
-| Data-Access Boundary               | C-004               |
+| Data Access Boundary               | C-004               |
 | Multi-Turn Manipulation            | C-001, C-004        |
-| Confidential Information Disclosure | C-009               |
+| Information Protection             | C-009               |
 
 Supporting constraints (C-003, C-005, C-006, C-008) shape how scenarios within
 each family are constructed but are not emitted as canonical constraint IDs.
+
+## Canonical Family Vocabulary
+
+| Canonical code            | Canonical title          | MVP status |
+| ------------------------- | ------------------------ | ---------- |
+| `authority_impersonation` | Authority Impersonation  | active     |
+| `tool_workflow_bypass`    | Tool Workflow Bypass     | active     |
+| `data_access_boundary`    | Data Access Boundary     | active     |
+| `multi_turn_manipulation` | Multi-Turn Manipulation  | active     |
+| `information_protection`  | Information Protection   | active     |
+| `benign`                  | Benign / Control         | reserved   |
+
+`benign` (seed `benign_001`..`benign_003`) is a reserved control family: benign
+queries with empty `constraint_ids` and `expected_label` `SAFE`. It is not scored
+as a security family.
 
 ## Optional Stretch Attack Families
 

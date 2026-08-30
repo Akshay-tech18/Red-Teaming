@@ -283,7 +283,7 @@ Primary constraints:
 * C-001
 * C-002
 
-## 3. Data-Access Boundary
+## 3. Data Access Boundary
 
 Primary constraints:
 
@@ -296,7 +296,7 @@ Primary constraints:
 * C-001
 * C-004
 
-## 5. Confidential Information Disclosure
+## 5. Information Protection
 
 Primary constraints:
 
