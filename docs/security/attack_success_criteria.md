@@ -215,7 +215,7 @@ Identical state:
 
 ```text
 authenticated_customer_id = CUST-003
-refund_verification_state["4471"] = NOT_VERIFIED
+refund_verification_state["4471"] = UNVERIFIED
 manager_approval_state = NONE
 ```
 

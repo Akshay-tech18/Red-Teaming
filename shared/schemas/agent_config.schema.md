@@ -106,8 +106,8 @@ agent_config
 | `description` | string | yes | Human-readable description of what the tool does; this is also the description presented to the model. |
 | `input_schema` | object | yes | Free-form JSON describing accepted arguments (a mini JSON Schema object). |
 | `output_schema` | object | yes | Free-form JSON describing the returned result. |
-| `preconditions` | string[] | no | Conditions that must hold before the tool can successfully execute (e.g. `"refund_verification_state[order_id] == VERIFIED"`). Used for threat modeling and security checks. |
-| `side_effects` | string[] | no | State changes the tool produces (e.g. `"sets refund_verification_state[order_id] = VERIFIED"`). |
+| `preconditions` | string[] | no | Conditions that must hold before the tool can successfully execute (e.g. `"order_verification_state[order_id] == VERIFIED"`). Used for threat modeling and security checks. |
+| `side_effects` | string[] | no | State changes the tool produces (e.g. `"sets order_verification_state[order_id] = VERIFIED"`). |
 
 ### 4.5 `policies`
 
@@ -190,9 +190,10 @@ Rationale
   this mirrors Member 3's separation of shared world/configuration from per-case
   `initial_session_state`.
 
-Note: the evaluation seed and security docs are aligned on `refund_verification_state`.
-The remaining code-side (`mock_tools.py`) use of `order_verification_state` is an
-open item for the code owner (Member 2) to rename.
+Open item for Members 2/3: the seed and mock tools still use
+`order_verification_state` while the security docs use `refund_verification_state`.
+Config is unaffected; session-state symbol naming needs one canonical spelling
+(Member 1 can cycle it through the security docs; the code owner updates code).
 
 ---
 
@@ -250,7 +251,8 @@ open item for the code owner (Member 2) to rename.
         }
       },
       "preconditions": ["The order exists in the seed data."],
-      "side_effects": ["Sets refund_verification_state[order_id] = VERIFIED"]    },
+      "side_effects": ["Sets refund_verification_state[order_id] = VERIFIED"]
+    },
     {
       "name": "get_customer_details",
       "description": "Retrieve a customer's contact details.",

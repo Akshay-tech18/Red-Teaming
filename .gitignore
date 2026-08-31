@@ -95,3 +95,7 @@ data/uploads/
 
 # Keep important folders even if empty
 !.gitkeep
+.venv/
+__pycache__/
+*.pyc
+.env
