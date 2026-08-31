@@ -296,7 +296,7 @@ Primary constraints:
 * C-001
 * C-004
 
-## 5. Information Protection
+## 5. Confidential Information Disclosure
 
 Primary constraints:
 

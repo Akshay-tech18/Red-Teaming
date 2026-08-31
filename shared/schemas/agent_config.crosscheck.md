@@ -86,6 +86,8 @@ Docs rule: **only C-001/C-002/C-004/C-009 may appear** in `constraint_ids`.
 Canonical mapping below. The schema intentionally does not hard-code the MVP
 scoring set (it allows all C-###); the rule lives in the docs.
 
+**Status:** RESOLVED — evaluation branch seed (18 cases) uses only `C-001`/`C-002`/`C-004`/`C-009` as single primary scoring IDs.
+
 ### F6 — Seed `evaluation_type: HYBRID` ×5 (Member 3)
 
 attack_001..005 are `HYBRID`; docs + schema enum allow only
@@ -94,6 +96,8 @@ attack_001..005 are `HYBRID`; docs + schema enum allow only
 
 **Resolve (Member 3):** set each entry to its primary constraint's eval type;
 **Resolve (Member 2):** change the model default (see F8).
+
+**Status:** RESOLVED — evaluation branch seed uses only `DETERMINISTIC`/`SEMANTIC` (14 DETERMINISTIC, 4 SEMANTIC across 18 cases).
 
 ### F7 — Attack-family vocabulary inconsistent (3 sources)
 
@@ -113,6 +117,14 @@ title for family #5 (recommend **Information Protection**):
 `authority_impersonation`, `tool_workflow_bypass`, `data_access_boundary`,
 `multi_turn_manipulation`, `information_protection`, `benign`.
 Owners: M1 (docs naming), M2/M3 (enum + seed codes).
+
+**Status:** RESOLVED (name = `confidential_information_disclosure`) — the
+evaluation branch (`c5d102e`) established the canonical name for family #5 as
+`confidential_information_disclosure` in `attacks_seed.json` (A-008/A-009/
+borderline_003/004) and `attack_taxonomy.md`, overriding the earlier
+`information_protection` recommendation. M1 docs (`constraint_mapping.md`,
+`day2_constraint_review.md`) updated to match. `attack_families.py` enum is
+still SCREAMING and unaligned (M2).
 
 ### F8 — Constraint/Tool models vs schema fields (Member 2, Day-4 work)
 
@@ -139,17 +151,17 @@ optional `preconditions`/`side_effects` are **not** modeled.
 
 ### F9 — Scenario set vs seed set not 1:1 (note, not an error)
 
-9 scenarios (A-001..A-009) vs 13 seed entries (benign_001..003 + attack_001..010);
-different order-id namespaces (`ORD-1001..` vs `4471/5210`); C-009 CONF coverage
-split between the two (scenarios → CONF-003 supplier pricing; seed → CONF-001/002/
-004); seed attack_006 direct-override control case has no scenario counterpart.
+9 scenarios (A-001..A-009) vs 18 seed entries (benign_001..004 +
+borderline_001..005 + A-001..A-009); different order-id namespaces
+(`ORD-1001..` vs `4471/5210`); C-009 CONF coverage split between the two
+(scenarios → CONF-003 supplier pricing; seed → CONF-001/002/004).
 
 **Resolve:** treat scenarios as the source corpus and the seed as a subset +
 control cases; confirm when Member 3 locks the attack shape (Day 7).
 
 ### F10 — `benign` family semantics (docs note)
 
-Seed defines `benign` ×3 with empty `constraint_ids` and `expected_label` SAFE.
+Seed defines `benign` ×4 with empty `constraint_ids` and `expected_label` SAFE.
 Docs define no benign/reserved family. Recommend documenting `benign` as a
 reserved family in the canonical list (done in F7 resolution).
 
@@ -157,13 +169,19 @@ reserved family in the canonical list (done in F7 resolution).
 
 | Seed entry | Current `constraint_ids` | Canonical (single primary) | Eval type |
 | --- | --- | --- | --- |
-| attack_001 | C-001, C-006 | C-001 | DETERMINISTIC |
-| attack_002 | C-002, C-006 | C-002 | DETERMINISTIC |
-| attack_003 | C-001, C-003 | C-001 | DETERMINISTIC |
-| attack_004 | C-001, C-008 | C-001 | DETERMINISTIC |
-| attack_005 | C-004, C-005 | C-004 | DETERMINISTIC |
-| benign_001..003 | (empty) | (none) | DETERMINISTIC |
-| attack_006..010 | C-001 / C-009… | as-is (already single) | as-is |
+| A-001 | C-001 | C-001 | DETERMINISTIC |
+| A-002 | C-002 | C-002 | DETERMINISTIC |
+| A-003 | C-001 | C-001 | DETERMINISTIC |
+| A-004 | C-002 | C-002 | DETERMINISTIC |
+| A-005 | C-004 | C-004 | DETERMINISTIC |
+| A-006 | C-001 | C-001 | DETERMINISTIC |
+| A-007 | C-004 | C-004 | DETERMINISTIC |
+| A-008 | C-009 | C-009 | SEMANTIC |
+| A-009 | C-009 | C-009 | SEMANTIC |
+| benign_001..004 | (empty) | (none) | DETERMINISTIC |
+| borderline_001/002/005 | (empty) | (none) | DETERMINISTIC / SEMANTIC |
+| borderline_003 | C-009 | C-009 | SEMANTIC |
+| borderline_004 | C-009 | C-009 | SEMANTIC |
 
 ## 5. Owner map
 
@@ -184,22 +202,22 @@ Share this report + the schema with Members 2/3, agree the canonical items
 (F1/F3/F4/F7), then apply the Member-1-side doc edits (F1 tool name, F7 family
 naming) before Day 4's constraint-storage sync.
 
-## 7. Resolution status (Day-3 completion)
+## 7. Resolution status
 
-Status of the 10 findings after the Day-3 completion pass:
+Status of the 10 findings, updated against the evaluation branch (`c5d102e`):
 
 | Fix | Owner | Status |
 | --- | --- | --- |
-| F1 tool-name canonical | Team (docs M1, seed M3, code M2) | **DEFERRED** — decision: docs keep `get_customer` as canonical; `get_customer_details` is the executable name (code + schema example). Alignment tracked to Member 2/D-day-4 confirmation. |
-| F2 state-key rename | M2 (code) + M3 (seed) | OPEN — docs already on `refund_verification_state`; code/seed on `order_verification_state`. |
-| F3/F4 state values | Team / Akshay | OPEN — waiting on Akshay confirmation (recommend `UNVERIFIED`/`VERIFIED` and explicit `APPROVED | NOT_APPROVED`). |
-| F5 constraint_ids | M3 | OPEN — canonical single-primary mapping in §4 above. |
-| F6 eval types | M3 + M2 (model default) | OPEN — seed `HYBRID` ×5 must become the primary constraint's eval type; model default drop. |
-| F7 family vocabulary | M1 docs + M2 enum + M3 seed | **DONE (M1 docs)** — canonical title+code table added to `constraint_mapping.md`; `Data-Access Boundary`/`Confidential Information Disclosure` renamed to `Data Access Boundary`/`Information Protection` in `constraint_mapping.md`, `day2_constraint_review.md`, `04_team_decisions.md`. M2 enum + M3 seed codes still to align. |
+| F1 tool-name canonical | Team (docs M1, seed M3, code M2) | **DEFERRED** — docs keep `get_customer` as canonical; `get_customer_details` is the executable name. `extraction_from_policies.json` confirms this alignment via `tool_name_aliases: {get_customer: [get_customer_details]}`. Code/schema-example alignment tracked to Member 2. |
+| F2 state-key rename | M2 (code) + M3 (seed) | **RESOLVED (M1 docs + seed)** — seed uses `refund_verification_state`, matching docs and schema. Code still `order_verification_state`. |
+| F3/F4 state values | Team / Akshay | **RESOLVED (seed)** — `NOT_VERIFIED`/`VERIFIED` and `APPROVED`/`NOT_APPROVED`, matching the security docs. Code owner to confirm. |
+| F5 constraint_ids | M3 | **RESOLVED** — seed (18 cases) uses only C-001/C-002/C-004/C-009 as single primary IDs. |
+| F6 eval types | M3 + M2 (model default) | **RESOLVED (seed)** — no `HYBRID`; only DETERMINISTIC/SEMANTIC. Model default (`models/constraint.py`) still M2. |
+| F7 family vocabulary | M1 docs + M2 enum + M3 seed | **RESOLVED (docs + seed)** — name is now `confidential_information_disclosure` per the evaluation branch; updated `constraint_mapping.md` + `day2_constraint_review.md`. `attack_families.py` enum still SCREAMING and unaligned (M2). |
 | F8 model/API parity | M2 | OPEN — Day-4 dependency on this schema. |
-| F9 scenario vs seed set | M3 | OPEN (note) — lock at Day 7. |
-| F10 benign reserved family | M1 (document) | **DONE** — `benign` documented as a reserved control family in `constraint_mapping.md` canonical table. |
+| F9 scenario vs seed set | M3 | OPEN (note) — lock at Day 7. Seed is 18 cases (9 attack + 4 benign + 5 borderline). |
+| F10 benign/reserved families | M1 (document) | **DONE** — `none`/`benign` documented as reserved control families in `constraint_mapping.md`. |
 
-**Remaining owner checkpoints before Day 4:** F5/F6 (Member 3 seed), F2
-(code), F8 (models/API), F1 final call (Member 2 confirmation), F3/F4
-(team/Akshay sign-off).
+**Remaining owner checkpoints before Day 4:** F2 code rename (M2),
+F6 model default (M2), F8 (models/API, M2), F1 final call (M2 confirmation),
+F7 `attack_families.py` enum alignment (M2), F9 (M3, Day 7).
