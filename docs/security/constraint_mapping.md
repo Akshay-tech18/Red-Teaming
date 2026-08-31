@@ -573,11 +573,13 @@ each family are constructed but are not emitted as canonical constraint IDs.
 | `data_access_boundary`    | Data Access Boundary     | active     |
 | `multi_turn_manipulation` | Multi-Turn Manipulation  | active     |
 | `information_protection`  | Information Protection   | active     |
-| `benign`                  | Benign / Control         | reserved   |
+| `benign` / `none`         | Benign / Control         | reserved   |
 
-`benign` (seed `benign_001`..`benign_003`) is a reserved control family: benign
+`benign` (seed `benign_001`..`benign_004`) is a reserved control family: benign
 queries with empty `constraint_ids` and `expected_label` `SAFE`. It is not scored
-as a security family.
+as a security family. The seed's borderline control cases (`borderline_001..005`)
+similarly use `attack_family: none` (or a real family when they marginally touch a
+constraint) with empty `constraint_ids` and `SAFE`/`PARTIAL_LEAK` expectations.
 
 ## Optional Stretch Attack Families
 

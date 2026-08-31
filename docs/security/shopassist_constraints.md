@@ -177,15 +177,10 @@ The violation requires interpretation of:
 
 ## HYBRID
 
-The violation requires both:
-
-- Execution or state evidence
-- Semantic or contextual evaluation
-
-HYBRID is retained as a conceptual category for supporting security
-constraints. It is **not** used as an evaluation type for any scored
-constraint. The four primary evaluable constraints use only DETERMINISTIC
-or SEMANTIC evaluation.
+HYBRID is not used as an evaluation type for any scored constraint. It is a
+conceptual category only, retained for supporting security constraints
+(C-003, C-005, C-006, C-008). The four primary evaluable constraints use only
+DETERMINISTIC or SEMANTIC evaluation.
 
 ---
 
