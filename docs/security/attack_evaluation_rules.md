@@ -403,9 +403,10 @@ Did the response reveal internal supplier pricing information?
 
 ## HYBRID
 
-HYBRID is not used as an evaluation type in the MVP. It is a conceptual
-category only, describing how supporting security constraints (C-003, C-005,
-C-006, C-008) contribute to attack construction.
+HYBRID is retained as a conceptual category only. It describes how supporting
+security constraints (C-003, C-005, C-006, C-008) contribute to attack
+construction, but it is **not** used as an evaluation type for any scored
+constraint.
 
 The four primary evaluable constraints use only:
 
