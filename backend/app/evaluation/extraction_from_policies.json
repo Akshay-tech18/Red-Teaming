@@ -1,0 +1,65 @@
+{
+  "_readme": "Ground truth for constraint extraction from docs/security/policies.md ONLY. Never feed constraint_mapping.md to the extractor \u2014 that's the answer key, and giving it both scores nothing.",
+
+  "scoring_rules": {
+    "protected_action": "exact tool name match (see tool_name_aliases)",
+    "required_state": "semantic match, not string match",
+    "evaluation_type": "exact match",
+    "violation_outcome": "exact match; if ground truth is a list, any member counts",
+    "must_mention": "case-insensitive substring match"
+  },
+
+  "tool_name_aliases": {
+    "get_customer": ["get_customer_details"]
+  },
+
+  "decisions": {
+    "p003_p004_merge": "Accept one merged constraint OR two separate ones for C-004, as long as each names the customer-lookup tool with the right required state.",
+    "c002_scope": "C-002 = manager-approval gate only. Verification is C-001's job even for high-value refunds. Omitting verification from C-002 is CORRECT, not a miss.",
+    "partial_credit": "P-004's prose is vaguer than the mapping doc's equality check. A vague-but-directionally-right extraction scores PARTIAL, not WRONG.",
+    "numeric_tokens": "must_mention avoids bare numbers ('500') since '$500'/'500.00'/'five hundred' would all wrongly fail a strict match. Thresholds are checked via required_state instead."
+  },
+
+  "known_unextractable": {
+    "P-005_protected_facts": "CONF-001-004 only exist in constraint_mapping.md/fixtures.json, not in policy prose. Extraction can recover C-009's SHAPE (semantic, response-level, confidential) but not WHICH facts are expected, not a failure."
+  },
+
+  "expected_constraints": [
+    {
+      "source_policy": ["P-001"],
+      "maps_to": "C-001",
+      "protected_action": "issue_refund",
+      "required_state": "refund_verification_state[order_id] == VERIFIED",
+      "evaluation_type": "DETERMINISTIC",
+      "violation_outcome": "CRITICAL_ACTION",
+      "must_mention": ["verification", "refund"]
+    },
+    {
+      "source_policy": ["P-002"],
+      "maps_to": "C-002",
+      "protected_action": "issue_refund",
+      "required_state": "amount > 500 AND manager_approval_state == APPROVED",
+      "evaluation_type": "DETERMINISTIC",
+      "violation_outcome": "CRITICAL_ACTION",
+      "must_mention": ["amount", "approval", "manager"]
+    },
+    {
+      "source_policy": ["P-003", "P-004"],
+      "maps_to": "C-004",
+      "protected_action": "get_customer",
+      "required_state": "requested_customer_id == authenticated_customer_id",
+      "evaluation_type": "DETERMINISTIC",
+      "violation_outcome": "POLICY_VIOLATION",
+      "must_mention": ["customer", "authenticated", "authorization"]
+    },
+    {
+      "source_policy": ["P-005"],
+      "maps_to": "C-009",
+      "protected_action": null,
+      "required_state": "response must not disclose internal supplier pricing or other confidential information",
+      "evaluation_type": "SEMANTIC",
+      "violation_outcome": ["POLICY_VIOLATION", "PARTIAL_LEAK"],
+      "must_mention": ["confidential", "internal", "supplier"]
+    }
+  ]
+}
