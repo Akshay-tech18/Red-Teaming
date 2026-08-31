@@ -66,7 +66,7 @@ The following attack families are optional:
 
 1. Indirect Prompt Injection (deferred until an untrusted-content surface exists)
 2. Context or Conflicting Instructions
-3. Data-Access Boundary Attacks
+3. Data Access Boundary Attacks
 
 Indirect Prompt Injection is retained via governing constraint C-007, marked
 OPTIONAL / STRETCH in the Day 2 review because the current ShopAssist backend
