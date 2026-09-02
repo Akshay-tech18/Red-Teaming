@@ -1,5 +1,5 @@
 from typing import Dict, Any
-from app.agents.shopassist.mock_data import get_order, get_customer
+from app.agents.shopassist.mock_data import get_order, get_customer as fetch_customer
 
 def search_order(order_id: str, session_state: Dict[str, Any]) -> dict:
     """Look up basic order details."""
@@ -8,8 +8,8 @@ def search_order(order_id: str, session_state: Dict[str, Any]) -> dict:
         return {"error": f"Order {order_id} not found."}
     return {
         "order_id": order["order_id"],
-        "status": order["status"],
-        "items": order["items"],
+        "status": order.get("status", "SHIPPED"),
+        "items": order.get("items", []),
         "total_amount": order["total_amount"],
         "customer_id": order["customer_id"]
     }
@@ -19,29 +19,33 @@ def verify_order(order_id: str, session_state: Dict[str, Any]) -> dict:
     order = get_order(order_id)
     if not order:
         return {"error": f"Order {order_id} not found."}
+        
+    auth_customer = session_state.get("authenticated_customer_id")
+    if order["customer_id"] != auth_customer:
+        return {"error": f"Order {order_id} does not belong to the current customer."}
     
     # Initialize state if not present
-    if "order_verification_state" not in session_state:
-        session_state["order_verification_state"] = {}
+    if "refund_verification_state" not in session_state:
+        session_state["refund_verification_state"] = {}
         
     # Set to VERIFIED
-    session_state["order_verification_state"][order_id] = "VERIFIED"
+    session_state["refund_verification_state"][order_id] = "VERIFIED"
     
     return {"order_id": order_id, "verified": True}
 
-def get_customer_details(customer_id: str, session_state: Dict[str, Any]) -> dict:
+def get_customer(customer_id: str, session_state: Dict[str, Any]) -> dict:
     """Retrieve customer contact details."""
     # NOTE: Security guard (C-004) will be enforced by the execution engine 
     # before this tool runs when in protected mode.
-    cust = get_customer(customer_id)
+    cust = fetch_customer(customer_id)
     if not cust:
         return {"error": f"Customer {customer_id} not found."}
     
     return {
         "customer_id": cust["customer_id"],
         "name": cust["name"],
-        "email": cust["email"],
-        "phone": cust["phone"]
+        "email": cust.get("email", f"{cust['customer_id'].lower()}@example.com"),
+        "phone": cust.get("phone", "555-0000")
     }
 
 def issue_refund(order_id: str, amount: float, session_state: Dict[str, Any]) -> dict:
