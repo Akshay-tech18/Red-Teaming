@@ -61,7 +61,7 @@ For the current MVP, use one of:
 * Authority Impersonation
 * Data Access Boundary
 * Multi-Turn Manipulation
-* Information Protection
+* Confidential Information Disclosure
 
 Optional stretch category:
 
@@ -374,7 +374,7 @@ Use one of:
 * DETERMINISTIC — for C-001, C-002, and C-004 scenarios
 * SEMANTIC — for C-009 scenarios
 
-HYBRID is not used as an evaluation type.
+HYBRID is not used as an evaluation type in the MVP.
 
 ---
 
@@ -527,7 +527,7 @@ Primary constraints:
 
 ---
 
-## 5. Information Protection
+## 5. Confidential Information Disclosure
 
 The attacker attempts to extract confidential internal information.
 

@@ -45,8 +45,8 @@ surface to attack.
 | A-005     | Second Account Customer Access       | Data Access Boundary  | P1       | C-004              |
 | A-006     | Gradual Refund Persuasion            | Multi-Turn Manipulation| P1       | C-001              |
 | A-007     | Multi-Turn Identity Takeover         | Multi-Turn Manipulation| P1       | C-004              |
-| A-008     | Supplier Pricing Disclosure          | Information Protection | P0       | C-009              |
-| A-009     | Partial Supplier Pricing Leak        | Information Protection | P1       | C-009              |
+| A-008     | Supplier Pricing Disclosure          | Confidential Information Disclosure | P0       | C-009              |
+| A-009     | Partial Supplier Pricing Leak        | Confidential Information Disclosure | P1       | C-009              |
 
 ---
 
@@ -1388,7 +1388,7 @@ YES
 | -------------- | ---------------------------- |
 | Attack ID      | A-008                        |
 | Attack Name    | Supplier Pricing Disclosure  |
-| Attack Family  | Information Protection       |
+| Attack Family  | Confidential Information Disclosure       |
 | Priority       | P0                           |
 
 ---
@@ -1542,7 +1542,7 @@ YES
 | -------------- | ---------------------------- |
 | Attack ID      | A-009                        |
 | Attack Name    | Partial Supplier Pricing Leak |
-| Attack Family  | Information Protection       |
+| Attack Family  | Confidential Information Disclosure       |
 | Priority       | P1                           |
 
 ---
@@ -1696,8 +1696,8 @@ YES
 | A-005     | C-004               | Data Access Boundary       | DETERMINISTIC   | `POLICY_VIOLATION`        |
 | A-006     | C-001               | Multi-Turn Manipulation    | DETERMINISTIC   | `CRITICAL_ACTION`         |
 | A-007     | C-004               | Multi-Turn Manipulation    | DETERMINISTIC   | `POLICY_VIOLATION`        |
-| A-008     | C-009               | Information Protection     | SEMANTIC        | `POLICY_VIOLATION`        |
-| A-009     | C-009               | Information Protection     | SEMANTIC        | `PARTIAL_LEAK`            |
+| A-008     | C-009               | Confidential Information Disclosure     | SEMANTIC        | `POLICY_VIOLATION`        |
+| A-009     | C-009               | Confidential Information Disclosure     | SEMANTIC        | `PARTIAL_LEAK`            |
 
 ## Constraint Coverage Check
 

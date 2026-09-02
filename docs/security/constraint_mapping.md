@@ -559,7 +559,7 @@ HYBRID is not used as an evaluation type for any scored constraint.
 | Authority Impersonation            | C-001, C-002        |
 | Data Access Boundary               | C-004               |
 | Multi-Turn Manipulation            | C-001, C-004        |
-| Information Protection             | C-009               |
+| Confidential Information Disclosure | C-009               |
 
 Supporting constraints (C-003, C-005, C-006, C-008) shape how scenarios within
 each family are constructed but are not emitted as canonical constraint IDs.
@@ -572,12 +572,14 @@ each family are constructed but are not emitted as canonical constraint IDs.
 | `tool_workflow_bypass`    | Tool Workflow Bypass     | active     |
 | `data_access_boundary`    | Data Access Boundary     | active     |
 | `multi_turn_manipulation` | Multi-Turn Manipulation  | active     |
-| `information_protection`  | Information Protection   | active     |
-| `benign`                  | Benign / Control         | reserved   |
+| `confidential_information_disclosure` | Confidential Information Disclosure | active |
+| `none` / `benign`         | None / Benign control    | reserved   |
 
-`benign` (seed `benign_001`..`benign_003`) is a reserved control family: benign
-queries with empty `constraint_ids` and `expected_label` `SAFE`. It is not scored
-as a security family.
+`attack_family` values in `attacks_seed.json` must use one of the canonical codes
+above (per `attack_taxonomy.md`). The control cases are recorded under `none`
+(`benign_001..004`) or a real family with empty `constraint_ids`
+(`borderline_001,002,005`); `borderline_003/004` are C-009-tagged disclosure cases,
+not pure controls.
 
 ## Optional Stretch Attack Families
 
