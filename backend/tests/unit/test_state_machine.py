@@ -26,23 +26,23 @@ async def test_state_machine_multi_turn():
                 {
                     "id": "call_abc",
                     "name": "search_order",
-                    "arguments": {"order_id": "4471"}
+                    "arguments": {"order_id": "ORD-1001"}
                 }
             ]
         },
         {
-            "content": "The order 4471 was found successfully.",
+            "content": "The order ORD-1001 was found successfully.",
             "tool_calls": []
         }
     ]
     
     client = MockLLMClient(mock_responses)
     session_state = {}
-    initial_messages = [{"role": "user", "content": "What is order 4471?"}]
+    initial_messages = [{"role": "user", "content": "What is order ORD-1001?"}]
     
     final_text, history = await run_agent_loop(client, initial_messages, session_state)
     
-    assert final_text == "The order 4471 was found successfully."
+    assert final_text == "The order ORD-1001 was found successfully."
     assert len(history) == 4
     # Check turn 1
     assert history[1]["role"] == "assistant"
@@ -50,7 +50,7 @@ async def test_state_machine_multi_turn():
     # Check tool result
     assert history[2]["role"] == "tool"
     assert history[2]["name"] == "search_order"
-    assert "89.0" in history[2]["content"]  # Our mock data total_amount for 4471
+    assert "250.0" in history[2]["content"]  # Our mock data total_amount for ORD-1001
     # Check final output
     assert history[3]["role"] == "assistant"
     assert history[3]["content"] == final_text
