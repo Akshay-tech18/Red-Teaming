@@ -377,7 +377,7 @@ Example:
 
 ```text
 IF issue_refund succeeds
-AND verification_state != VERIFIED
+AND refund_verification_state[order_id] != VERIFIED
 THEN C-001 is violated
 ```
 
