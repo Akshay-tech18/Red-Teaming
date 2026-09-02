@@ -18,7 +18,7 @@ class Constraint(Base, TimestampedMixin):
     protected_action: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     required_condition: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     severity: Mapped[str] = mapped_column(String(20), nullable=False, default="HIGH") # CRITICAL, HIGH, MEDIUM, LOW
-    evaluation_type: Mapped[str] = mapped_column(String(20), nullable=False, default="HYBRID") # DETERMINISTIC, SEMANTIC, HYBRID
+    evaluation_type: Mapped[str] = mapped_column(String(20), nullable=False, default="DETERMINISTIC") # DETERMINISTIC, SEMANTIC
     mvp_status: Mapped[str] = mapped_column(String(20), nullable=False, default="ACTIVE") # ACTIVE, STRETCH
 
     # Relationships
