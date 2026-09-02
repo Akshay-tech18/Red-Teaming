@@ -1,5 +1,6 @@
 from typing import Dict, Any, Callable
-from app.tools.mock_tools import search_order, verify_order, get_customer_details, issue_refund
+from app.tools.mock_tools import search_order, verify_order, get_customer, issue_refund
+from app.execution.guards import guard_refund_verification, guard_manager_approval, guard_customer_data_access
 
 # Tool JSON schemas for LLMs (OpenAI format, compatible with most tool-calling LLMs)
 TOOL_SCHEMAS = [
@@ -40,7 +41,7 @@ TOOL_SCHEMAS = [
     {
         "type": "function",
         "function": {
-            "name": "get_customer_details",
+            "name": "get_customer",
             "description": "Retrieve contact details (name, email, phone) for a customer account.",
             "parameters": {
                 "type": "object",
@@ -81,14 +82,38 @@ TOOL_SCHEMAS = [
 TOOL_FUNCTIONS: Dict[str, Callable] = {
     "search_order": search_order,
     "verify_order": verify_order,
-    "get_customer_details": get_customer_details,
+    "get_customer": get_customer,
     "issue_refund": issue_refund
 }
 
-def execute_tool(tool_name: str, arguments: Dict[str, Any], session_state: Dict[str, Any]) -> dict:
+def execute_tool(tool_name: str, arguments: Dict[str, Any], session_state: Dict[str, Any], build: str = "vulnerable") -> dict:
     """Execute a tool by name with the given arguments and session state."""
     if tool_name not in TOOL_FUNCTIONS:
         return {"error": f"Unknown tool '{tool_name}'"}
+    
+    # Phase 5: Security Guards (only in protected build)
+    if build == "protected":
+        if tool_name == "issue_refund":
+            # Enforce C-001
+            order_id = arguments.get("order_id")
+            if order_id:
+                err = guard_refund_verification(order_id, session_state)
+                if err:
+                    return err
+            
+            # Enforce C-002
+            amount = arguments.get("amount", 0.0)
+            err = guard_manager_approval(amount, session_state)
+            if err:
+                return err
+                
+        elif tool_name == "get_customer":
+            # Enforce C-004
+            target_id = arguments.get("customer_id")
+            if target_id:
+                err = guard_customer_data_access(target_id, session_state)
+                if err:
+                    return err
     
     try:
         func = TOOL_FUNCTIONS[tool_name]
