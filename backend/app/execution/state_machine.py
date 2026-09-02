@@ -3,6 +3,7 @@ from typing import List, Dict, Any, Tuple, Optional
 from app.agents.shopassist.agent import LLMClient
 from app.tools.registry import execute_tool
 from app.tracing.collector import TraceCollector
+from app.execution.guards import guard_refund_verification, guard_manager_approval, guard_customer_data_access
 
 class MaxTurnsReachedError(Exception):
     """Raised when the agent loops too many times without returning a final text response."""
@@ -13,7 +14,8 @@ async def run_agent_loop(
     messages: List[Dict[str, Any]],
     session_state: Dict[str, Any],
     max_turns: int = 10,
-    collector: Optional[TraceCollector] = None
+    collector: Optional[TraceCollector] = None,
+    build: str = "vulnerable"
 ) -> Tuple[str, List[Dict[str, Any]]]:
     """
     Executes the core conversational loop for the LLM.
@@ -67,11 +69,34 @@ async def run_agent_loop(
             if collector:
                 collector.log_tool_call(tool_name, arguments, session_state)
             
-            # NOTE: In Phase 5, we will inject Security Guards here before execution
-            result = execute_tool(tool_name, arguments, session_state)
+            # Phase 5: Execute tool with guards
+            guard_error = None
+            if build == "protected":
+                if tool_name == "issue_refund":
+                    order_id = arguments.get("order_id")
+                    if order_id:
+                        guard_error = guard_refund_verification(order_id, session_state)
+                    if not guard_error:
+                        amount = arguments.get("amount", 0.0)
+                        guard_error = guard_manager_approval(amount, session_state)
+                elif tool_name == "get_customer":
+                    target_id = arguments.get("customer_id")
+                    if target_id:
+                        guard_error = guard_customer_data_access(target_id, session_state)
             
-            if collector:
-                collector.log_tool_result(tool_name, result, session_state)
+            if guard_error:
+                result = guard_error
+                if collector:
+                    collector.log_tool_result(tool_name, result, session_state)
+                    collector.log_security_event(
+                        rule_id=result["blocked_by"],
+                        severity=result.get("severity", "CRITICAL"),
+                        content=result.get("error", "Security Guard Blocked execution.")
+                    )
+            else:
+                result = execute_tool(tool_name, arguments, session_state)
+                if collector:
+                    collector.log_tool_result(tool_name, result, session_state)
             
             # Append tool result to the history so the LLM can read it on the next turn
             messages.append({

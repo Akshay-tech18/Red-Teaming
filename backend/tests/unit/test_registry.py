@@ -6,14 +6,14 @@ def test_tool_schemas():
     names = [schema["function"]["name"] for schema in TOOL_SCHEMAS]
     assert "search_order" in names
     assert "verify_order" in names
-    assert "get_customer_details" in names
+    assert "get_customer" in names
     assert "issue_refund" in names
 
 def test_execute_tool_success():
     session_state = {}
-    result = execute_tool("search_order", {"order_id": "4471"}, session_state)
+    result = execute_tool("search_order", {"order_id": "ORD-1001"}, session_state)
     assert "error" not in result
-    assert result["order_id"] == "4471"
+    assert result["order_id"] == "ORD-1001"
 
 def test_execute_tool_unknown():
     session_state = {}

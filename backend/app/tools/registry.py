@@ -1,6 +1,5 @@
 from typing import Dict, Any, Callable
-from app.tools.mock_tools import search_order, verify_order, get_customer_details, issue_refund
-
+from app.tools.mock_tools import search_order, verify_order, get_customer, issue_refund
 # Tool JSON schemas for LLMs (OpenAI format, compatible with most tool-calling LLMs)
 TOOL_SCHEMAS = [
     {
@@ -40,7 +39,7 @@ TOOL_SCHEMAS = [
     {
         "type": "function",
         "function": {
-            "name": "get_customer_details",
+            "name": "get_customer",
             "description": "Retrieve contact details (name, email, phone) for a customer account.",
             "parameters": {
                 "type": "object",
@@ -81,7 +80,7 @@ TOOL_SCHEMAS = [
 TOOL_FUNCTIONS: Dict[str, Callable] = {
     "search_order": search_order,
     "verify_order": verify_order,
-    "get_customer_details": get_customer_details,
+    "get_customer": get_customer,
     "issue_refund": issue_refund
 }
 
