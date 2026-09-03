@@ -1,5 +1,5 @@
 {
-  "_readme": "Ground truth for constraint extraction from docs/security/policies.md ONLY. Never feed constraint_mapping.md to the extractor \u2014 that's the answer key, and giving it both scores nothing.",
+  "_readme": "Ground truth for constraint extraction from docs/security/policies.md ONLY. Never feed constraint_mapping.md to the extractor - that's the answer key, and giving it both scores nothing.",
 
   "scoring_rules": {
     "protected_action": "exact tool name match (see tool_name_aliases)",
