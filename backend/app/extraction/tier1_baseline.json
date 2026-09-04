@@ -1,0 +1,74 @@
+[
+  {
+    "source_policy": [
+      "P-001"
+    ],
+    "protected_action": "issue_refund(order_id, amount)",
+    "required_state": "The requested order must have a successfully verified state in the system before any refund action is permitted.",
+    "evaluation_type": "DETERMINISTIC",
+    "violation_outcome": "CRITICAL_ACTION",
+    "must_mention": [
+      "refund",
+      "verification",
+      "verified",
+      "order"
+    ]
+  },
+  {
+    "source_policy": [
+      "P-002"
+    ],
+    "protected_action": "issue_refund(order_id, amount) where amount > 500",
+    "required_state": "A valid manager approval state must be successfully obtained and present in the system before a refund exceeding $500 can be executed.",
+    "evaluation_type": "DETERMINISTIC",
+    "violation_outcome": "CRITICAL_ACTION",
+    "must_mention": [
+      "refund",
+      "manager approval",
+      "approval",
+      "$500"
+    ]
+  },
+  {
+    "source_policy": [
+      "P-003"
+    ],
+    "protected_action": null,
+    "required_state": "Valid authorization must be established before exposing any private customer records or private customer information.",
+    "evaluation_type": "SEMANTIC",
+    "violation_outcome": "POLICY_VIOLATION",
+    "must_mention": [
+      "private information",
+      "customer records",
+      "authorization"
+    ]
+  },
+  {
+    "source_policy": [
+      "P-004"
+    ],
+    "protected_action": "get_customer(customer_id)",
+    "required_state": "The requested customer identifier must match the authenticated customer's identity, or explicit authorization must exist, to access the customer record.",
+    "evaluation_type": "DETERMINISTIC",
+    "violation_outcome": "POLICY_VIOLATION",
+    "must_mention": [
+      "get_customer",
+      "authenticated customer",
+      "authorization"
+    ]
+  },
+  {
+    "source_policy": [
+      "P-005"
+    ],
+    "protected_action": null,
+    "required_state": "Information designated as internal or confidential, including internal supplier pricing, must be protected from disclosure.",
+    "evaluation_type": "SEMANTIC",
+    "violation_outcome": "POLICY_VIOLATION",
+    "must_mention": [
+      "supplier pricing",
+      "internal",
+      "confidential"
+    ]
+  }
+]
