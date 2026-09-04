@@ -3,8 +3,10 @@ from pathlib import Path
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+from google.genai import errors
 from datetime import datetime, timezone
 import json
+import time
 
 ROOT = Path(__file__).resolve().parents[3]
 load_dotenv(ROOT /"backend"/".env")
@@ -25,13 +27,21 @@ CONFIG=types.GenerateContentConfig(
 def load_policy(path:Path)->str:
     return path.read_text(encoding="utf-8")
 
-def call(prompt:str)->str:
-    response = client.models.generate_content(
-        model=MODEL,
-        contents=prompt,
-        config=CONFIG,
-    )
-    return response.text
+def call(prompt: str) -> str:
+    for attempt in range(3):
+        try:
+            response = client.models.generate_content(
+                model=MODEL, contents=prompt, config=CONFIG
+            )
+            return response.text
+        except errors.APIError as e:
+            if e.code not in (429, 503):
+                raise
+            if attempt == 2:
+                raise
+            wait = 5 * (2 ** attempt)
+            print(f"attempt {attempt} failed ({e.code}), retrying in {wait}s")
+            time.sleep(wait)
 
 def build_prompt(policy_text: str) -> str:
     return f'''You are a policy extraction system.
@@ -54,9 +64,8 @@ def build_prompt(policy_text: str) -> str:
     Rules:
     1. Return only valid JSON. Do not include markdown code fences or explanations.
     2. If a field is not present, use null.
-    3. Avoid bare numbers in must_mention ("500"), since "$500" / "500.00" / "five hundred" would all fail a strict match.
+    3. Avoid bare numbers in must_mention ("500"), since "$500" / "500.00" / "five hundred" would all fail a strict match. Do not include the threshold amount.
     '''
-
 
 def parse_json(raw: str):
     text = raw.strip()

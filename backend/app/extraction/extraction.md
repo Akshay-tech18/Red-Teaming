@@ -42,3 +42,6 @@ this stays honest.
 ## Model choice
  
 `gemini-3.5-flash`, pinned. 
+
+## Limitation
+Extraction is not fully deterministic even at temperature 0
