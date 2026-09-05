@@ -99,3 +99,5 @@ data/uploads/
 __pycache__/
 *.pyc
 .env
+
+extraction_runs.jsonl
