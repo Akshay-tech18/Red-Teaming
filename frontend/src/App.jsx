@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 import PipelineStepper from './components/PipelineStepper';
+import AICoPilotDrawer from './components/AICoPilotDrawer';
+import LogoIntro from './components/LogoIntro';
 
 import AgentConfigView from './views/AgentConfigView';
 import ConstraintsView from './views/ConstraintsView';
@@ -17,6 +18,16 @@ export default function App() {
   const [currentView, setView] = useState('config');
   const [currentVersion, setVersion] = useState('ver-1.0');
   const [isOnline, setIsOnline] = useState(false);
+  const [isCoPilotOpen, setIsCoPilotOpen] = useState(true);
+
+  // Logo Intro Animation Phase State ('splash' -> 'header')
+  const [logoPhase, setLogoPhase] = useState('splash');
+  const [introKey, setIntroKey] = useState(0);
+
+  const handleReplayIntro = () => {
+    setLogoPhase('splash');
+    setIntroKey((k) => k + 1);
+  };
 
   // Core Data
   const [agent, setAgent] = useState(INITIAL_DATA.agent);
@@ -134,33 +145,39 @@ export default function App() {
   };
 
   return (
-    <div className="flex min-h-screen bg-app-bg text-slate-100">
-      {/* Sidebar navigation with targeted icon glow */}
-      <Sidebar
-        currentView={currentView}
-        setView={setView}
-        isOnline={isOnline}
+    <div className="min-h-screen bg-app-bg text-slate-100 flex flex-col">
+      {/* Signature Initial Load Logo Intro Reveal & Slide Transition */}
+      <LogoIntro 
+        key={introKey}
+        onAnimationPhaseChange={(phase) => setLogoPhase(phase)}
       />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <TopBar
-          currentVersion={currentVersion}
-          setVersion={setVersion}
-          agent={agent}
-          onRunDemo={() => handleRunAttack('A-001')}
-          onExport={handleExportConfig}
-        />
+      {/* Consolidated Top Bar with brand mark, sliding toggle, and live API heartbeat */}
+      <TopBar
+        currentVersion={currentVersion}
+        setVersion={setVersion}
+        agent={agent}
+        isOnline={isOnline}
+        isCoPilotOpen={isCoPilotOpen}
+        onToggleCoPilot={() => setIsCoPilotOpen(!isCoPilotOpen)}
+        onRunDemo={() => handleRunAttack('A-001')}
+        onExport={handleExportConfig}
+        logoInHeader={logoPhase === 'header'}
+        onReplayLogo={handleReplayIntro}
+      />
 
-        <main className="p-7 max-w-7xl w-full mx-auto flex-1">
-          {/* Segmented Pipeline Stepper (01 to 06) with targeted icon glow */}
+      {/* Workspace Area: Main Pipeline Views + Persistent Global AI Co-Pilot Panel */}
+      <div className="flex-1 flex min-w-0">
+        {/* Main Content Area - Expands full width or flexes beside Co-Pilot */}
+        <main className="p-6 md:p-8 max-w-[1440px] w-full mx-auto flex-1 flex flex-col min-w-0">
+          {/* Consolidated Pipeline Stepper (01 to 06) with sliding icon hover states */}
           <PipelineStepper
             currentView={currentView}
             setView={setView}
           />
 
           {/* View Container */}
-          <div>
+          <div className="flex-1">
             {currentView === 'config' && (
               <AgentConfigView
                 agent={agent}
@@ -215,6 +232,18 @@ export default function App() {
             )}
           </div>
         </main>
+
+        {/* Persistent Global Red-Team AI Guardian Co-Pilot (Active across ALL 6 tabs) */}
+        <AICoPilotDrawer
+          isOpen={isCoPilotOpen}
+          onClose={() => setIsCoPilotOpen(false)}
+          currentView={currentView}
+          currentVersion={currentVersion}
+          agent={agent}
+          activeAttack={selectedAttack}
+          activeRun={activeRun}
+          onNavigateTo={handleNavigateTo}
+        />
       </div>
     </div>
   );

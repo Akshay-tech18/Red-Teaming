@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import { 
   Shield, 
-  Wrench, 
   FileText, 
-  ChevronDown, 
-  ChevronUp, 
-  Lock, 
   Save, 
   ArrowRight,
   AlertTriangle,
-  Code2
+  Code2,
+  Lock,
+  Sparkles
 } from 'lucide-react';
 
 export default function AgentConfigView({ 
@@ -18,11 +16,9 @@ export default function AgentConfigView({
   onPromptChange,
   onNavigateTo 
 }) {
-  const [openTool, setOpenTool] = useState('tool-issue-refund');
   const [savedNotice, setSavedNotice] = useState(false);
 
   const curVer = agent?.versions?.find((v) => v.id === currentVersion) || agent?.versions?.[0] || {};
-  const tools = agent?.tools || [];
   const policies = agent?.policies || [];
 
   const handleSavePrompt = () => {
@@ -49,7 +45,7 @@ export default function AgentConfigView({
 
   return (
     <div className="space-y-6 animate-view-fade">
-      {/* View Header with high-contrast type scale */}
+      {/* Header with high-contrast type scale */}
       <div>
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold tracking-tight text-white font-sans">
@@ -60,117 +56,111 @@ export default function AgentConfigView({
           </span>
         </div>
         <p className="text-xs text-slate-400 mt-1 max-w-3xl">
-          System prompt declarations, sandboxed tool preconditions, and formal corporate security requirements for ShopAssist.
+          System prompt declarations, corporate security policies (P-001 through P-005), and interactive Red-Team Co-Pilot for ShopAssist.
         </p>
       </div>
 
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left: System Prompt & Policies (7 cols) */}
-        <div className="lg:col-span-7 space-y-6">
-          {/* Target System Prompt Card */}
-          <div className="p-5 rounded-sm bg-app-panel border border-app-border space-y-3 shadow-panel">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-white flex items-center gap-2 font-mono">
-                  <FileText className="w-4 h-4 text-blue-400" />
-                  Target System Prompt ({curVer.version_label || 'v1.0'})
-                </h3>
-                <p className="text-xs text-slate-400 font-sans mt-0.5">
-                  Directives, behavioral rules, and contextual knowledge loaded into agent context.
-                </p>
-              </div>
-              <button
-                onClick={handleSavePrompt}
-                className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-sm bg-white/[0.04] hover:bg-white/[0.08] border border-app-border text-xs font-mono text-slate-300 transition-all"
-              >
-                <Save className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-400 group-hover:shadow-icon-glow transition-all" />
-                <span>{savedNotice ? 'Saved!' : 'Save Changes'}</span>
-              </button>
+      {/* Main Container */}
+      <div className="space-y-6">
+        {/* Target System Prompt Card */}
+        <div className="p-5 rounded-sm bg-app-panel border border-app-border space-y-3 shadow-panel">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2 font-mono">
+                <FileText className="w-4 h-4 text-blue-400" />
+                Target System Prompt ({curVer.version_label || 'v1.0'})
+              </h3>
+              <p className="text-xs text-slate-400 font-sans mt-0.5">
+                Directives, behavioral rules, and persona boundaries loaded into agent context.
+              </p>
             </div>
-
-            <div className="relative">
-              <textarea
-                value={curVer.system_prompt || ''}
-                onChange={(e) => onPromptChange && onPromptChange(e.target.value)}
-                rows={9}
-                className="w-full bg-[#080d14] text-slate-200 text-xs font-mono p-3.5 rounded-sm border border-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/40 leading-relaxed transition-colors"
-                spellCheck="false"
-              />
-            </div>
+            <button
+              onClick={handleSavePrompt}
+              className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-sm bg-white/[0.04] hover:bg-white/[0.08] border border-app-border text-xs font-mono text-slate-300 transition-all"
+            >
+              <Save className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-400 group-hover:shadow-icon-glow transition-all" />
+              <span>{savedNotice ? 'Saved!' : 'Save Changes'}</span>
+            </button>
           </div>
 
-          {/* Corporate Security Policies with Hierarchical Fix & Linkage Chips */}
-          <div className="p-5 rounded-sm bg-app-panel border border-app-border space-y-3 shadow-panel">
+          <div className="relative">
+            <textarea
+              value={curVer.system_prompt || ''}
+              onChange={(e) => onPromptChange && onPromptChange(e.target.value)}
+              rows={8}
+              className="w-full bg-[#080d14] text-slate-200 text-xs font-mono p-3.5 rounded-sm border border-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/40 leading-relaxed transition-colors"
+              spellCheck="false"
+            />
+          </div>
+        </div>
+
+        {/* Corporate Security Policies: Responsive Grid of Uniform Square Cards (Part C2) */}
+        <div className="p-5 rounded-sm bg-app-panel border border-app-border space-y-4 shadow-panel">
+          <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-white flex items-center gap-2 font-mono">
                 <Shield className="w-4 h-4 text-emerald-400" />
                 Corporate Security Policies (Ingested Baseline)
               </h3>
               <p className="text-xs text-slate-400 font-sans mt-0.5">
-                Ground-truth enterprise security policies for ShopAssist.
+                Formal enterprise requirements enforced across all agent workflows.
               </p>
             </div>
+            <span className="text-[10.5px] font-mono text-slate-400 bg-black/40 px-2 py-0.5 rounded-sm border border-slate-800">
+              {policies.length} Policies Ingested
+            </span>
+          </div>
 
-            <div className="space-y-3 pt-1">
-              {policies.map((p) => {
-                const link = getPolicyLinkage(p.id);
-                const isCritical = p.severity === 'CRITICAL';
+          {/* Grid of Uniform Square Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {policies.map((p) => {
+              const isCritical = p.severity === 'CRITICAL';
+              const link = getPolicyLinkage(p.id);
 
-                return (
-                  <div
-                    key={p.id}
-                    className="p-4 rounded-sm bg-[#0c111a] border border-app-borderSubtle hover:border-slate-700 transition-colors space-y-2.5"
-                  >
-                    {/* Header: ID, Title, Severity */}
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          {/* Small monospace badge */}
-                          <span className="font-mono text-[10px] text-slate-400 bg-black/40 px-1.5 py-0.5 rounded-sm border border-slate-800">
-                            {p.id}
-                          </span>
+              return (
+                <div
+                  key={p.id}
+                  className="p-4 rounded-sm bg-[#0c111a] border border-app-borderSubtle hover:border-slate-700 transition-all flex flex-col justify-between h-[230px] group shadow-panel"
+                >
+                  {/* Top Row: Muted Monospace ID + Severity Badge */}
+                  <div className="flex items-center justify-between pb-1 border-b border-white/[0.04]">
+                    <span className="font-mono text-[10.5px] font-bold text-slate-400 bg-black/50 px-2 py-0.5 rounded-sm border border-slate-800">
+                      {p.id}
+                    </span>
+                    <span
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[9.5px] font-mono font-bold uppercase tracking-wider ${
+                        isCritical
+                          ? 'bg-red-500/20 text-red-300 border border-red-500/40 ring-1 ring-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.15)]'
+                          : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                      }`}
+                    >
+                      <AlertTriangle className="w-2.5 h-2.5" />
+                      {p.severity}
+                    </span>
+                  </div>
 
-                          {/* Bold, larger, primary title */}
-                          <h4 className="text-sm font-bold text-white font-sans">
-                            {p.title}
-                          </h4>
-                        </div>
-                      </div>
-
-                      {/* Severity badge with triangle icon */}
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold uppercase tracking-wider ${
-                          isCritical
-                            ? 'bg-red-500/20 text-red-300 border border-red-500/40 ring-1 ring-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.15)]'
-                            : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                        }`}
-                      >
-                        <AlertTriangle className="w-3 h-3" />
-                        {p.severity}
-                      </span>
-                    </div>
-
-                    {/* Secondary description */}
-                    <p className="text-xs text-slate-400 font-sans leading-relaxed">
+                  {/* Middle Section: Title + Description */}
+                  <div className="space-y-1.5 my-2 flex-1">
+                    <h4 className="text-xs font-bold text-white font-sans line-clamp-1 group-hover:text-blue-300 transition-colors">
+                      {p.title}
+                    </h4>
+                    <p className="text-[11px] text-slate-400 font-sans leading-relaxed line-clamp-3">
                       {p.description}
                     </p>
+                  </div>
 
-                    {/* Distinct Protected Action Code-Block */}
-                    <div className="p-2.5 rounded-sm bg-[#070b12] border border-slate-800 text-xs font-mono text-sky-300 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Code2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span className="text-slate-400 select-none">PROTECTED_ACTION: </span>
-                        <code>{p.protected_action}</code>
-                      </div>
+                  {/* Pinned Bottom Section: Protected Action Code Tag + Linkage Breadcrumb */}
+                  <div className="space-y-2 pt-2 border-t border-white/[0.04] mt-auto">
+                    {/* Protected Action Tag */}
+                    <div className="p-1.5 rounded-sm bg-[#070b12] border border-slate-800/80 text-[10.5px] font-mono text-sky-300 flex items-center justify-between truncate">
+                      <span className="text-slate-500 select-none text-[9.5px]">ACTION:</span>
+                      <code className="truncate ml-1">{p.protected_action}</code>
                     </div>
 
-                    {/* Traceability Linkage Breadcrumb Chip */}
-                    <div className="flex items-center justify-between pt-1 border-t border-white/[0.04]">
-                      <span className="text-[10px] font-mono text-slate-500">
-                        PIPELINE TRACEABILITY
-                      </span>
-                      <div className="inline-flex items-center gap-1 font-mono text-[10px] px-2 py-0.5 rounded-sm bg-black/30 border border-slate-800 text-slate-400">
+                    {/* Traceability Linkage Breadcrumb */}
+                    <div className="flex items-center justify-between text-[9.5px] font-mono">
+                      <span className="text-slate-500">TRACE:</span>
+                      <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-black/40 border border-slate-800">
                         <span className="text-blue-400 font-bold">{p.id}</span>
                         <span className="text-slate-600">→</span>
                         <button
@@ -189,83 +179,9 @@ export default function AgentConfigView({
                       </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Right: Mock Tool Schemas (5 cols) */}
-        <div className="lg:col-span-5 space-y-4">
-          <div className="p-5 rounded-sm bg-app-panel border border-app-border space-y-3 shadow-panel">
-            <div>
-              <h3 className="text-sm font-bold text-white flex items-center gap-2 font-mono">
-                <Wrench className="w-4 h-4 text-amber-400" />
-                Tool Capabilities &amp; Schemas
-              </h3>
-              <p className="text-xs text-slate-400 font-sans mt-0.5">
-                Sandboxed tools exposed to the agent execution state machine.
-              </p>
-            </div>
-
-            <div className="space-y-2 pt-1">
-              {tools.map((t) => {
-                const isOpen = openTool === t.id;
-                const isCritical = t.risk_level === 'CRITICAL';
-                return (
-                  <div
-                    key={t.id}
-                    className="rounded-sm bg-[#0c111a] border border-app-borderSubtle overflow-hidden transition-all"
-                  >
-                    <button
-                      onClick={() => setOpenTool(isOpen ? null : t.id)}
-                      className="w-full px-3.5 py-2.5 flex items-center justify-between text-left hover:bg-white/[0.02] transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs text-sky-400 font-bold">{t.name}()</span>
-                        <span className={`px-1.5 py-0.2 rounded-sm text-[9px] font-mono font-bold uppercase border ${
-                          isCritical
-                            ? 'bg-red-500/20 text-red-300 border-red-500/40 ring-1 ring-red-500/20'
-                            : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
-                        }`}>
-                          {t.risk_level}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {t.is_protected ? (
-                          <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-                            <Lock className="w-2.5 h-2.5" /> Guarded
-                          </span>
-                        ) : (
-                          <span className="text-[10px] text-slate-500 font-mono">Open</span>
-                        )}
-                        {isOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
-                      </div>
-                    </button>
-
-                    {isOpen && (
-                      <div className="px-3.5 py-3 border-t border-slate-800/80 bg-[#080c13] text-xs font-mono space-y-2.5">
-                        <p className="text-slate-300 font-sans text-xs">{t.description}</p>
-                        <div className="space-y-1.5 text-[11px]">
-                          <div>
-                            <span className="text-slate-500">PRECONDITION: </span>
-                            <span className="text-slate-300">{t.preconditions}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-500">SIDE_EFFECTS: </span>
-                            <span className="text-slate-300">{t.side_effects}</span>
-                          </div>
-                          <div className="p-2 rounded-sm bg-black/40 border border-slate-800/80">
-                            <span className="text-slate-500 block mb-1">PARAM_SCHEMA: </span>
-                            <code className="text-amber-300 text-[10.5px]">{JSON.stringify(t.input_schema.properties, null, 2)}</code>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
