@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "shopassist-agent-config.schema.json",
+  "title": "AI Agent Guardian Agent Configuration",
+  "description": "Canonical configuration schema for defining a target agent's prompt, tools, policies, and security constraints.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "agent",
+    "prompt",
+    "tools",
+    "policies",
+    "constraints"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name of the target agent."
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of the target agent."
+        }
+      }
+    },
+    "prompt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "system_prompt"
+      ],
+      "properties": {
+        "system_prompt": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The system-level instructions that define the target agent's behavior."
+        }
+      }
+    },
+    "tools": {
+      "type": "array",
+      "description": "Tools available to the target agent.",
+      "items": {
+        "$ref": "#/$defs/tool"
+      }
+    },
+    "policies": {
+      "type": "array",
+      "description": "Security policies that define prohibited or restricted agent behavior.",
+      "items": {
+        "$ref": "#/$defs/policy"
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "description": "Structured security constraints derived from the agent's policies and configuration.",
+      "items": {
+        "$ref": "#/$defs/constraint"
+      }
+    }
+  },
+  "$defs": {
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "description",
+        "input_schema",
+        "output_schema"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unique tool name."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable description of what the tool does."
+        },
+        "input_schema": {
+          "type": "object",
+          "description": "JSON-compatible schema describing the tool's accepted arguments."
+        },
+        "output_schema": {
+          "type": "object",
+          "description": "JSON-compatible schema describing the tool's returned result."
+        },
+        "preconditions": {
+          "type": "array",
+          "description": "Conditions that must be satisfied before the tool can successfully execute.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "side_effects": {
+          "type": "array",
+          "description": "State changes or other effects produced by the tool.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_id",
+        "name",
+        "description"
+      ],
+      "properties": {
+        "policy_id": {
+          "type": "string",
+          "pattern": "^P-[0-9]{3}$",
+          "description": "Canonical policy identifier."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Short policy name."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable description of the security policy."
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH",
+            "CRITICAL"
+          ],
+          "description": "Severity associated with violating the policy."
+        },
+        "rule": {
+          "type": "string",
+          "description": "Plain-language security rule represented by the policy."
+        }
+      }
+    },
+    "constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "constraint_id",
+        "name",
+        "description",
+        "protected_asset",
+        "protected_action",
+        "required_condition",
+        "forbidden_behavior",
+        "severity",
+        "attack_objective"
+      ],
+      "properties": {
+        "constraint_id": {
+          "type": "string",
+          "pattern": "^C-[0-9]{3}$",
+          "description": "Canonical security constraint identifier."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Short descriptive name of the constraint."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Detailed explanation of the security requirement."
+        },
+        "protected_asset": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Asset protected by the constraint."
+        },
+        "protected_action": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Tool or action protected by the constraint."
+        },
+        "required_condition": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Security condition that must be satisfied before the protected action is allowed."
+        },
+        "forbidden_behavior": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Behavior that violates the constraint."
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH",
+            "CRITICAL"
+          ],
+          "description": "Severity of violating the constraint."
+        },
+        "attack_objective": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Security objective an attacker could attempt against this constraint."
+        },
+        "source_policy_ids": {
+          "type": "array",
+          "description": "Policy IDs from which the constraint was derived.",
+          "items": {
+            "type": "string",
+            "pattern": "^P-[0-9]{3}$"
+          }
+        },
+        "evaluation_type": {
+          "type": "string",
+          "enum": [
+            "DETERMINISTIC",
+            "SEMANTIC"
+          ],
+          "description": "Evaluation mechanism used when this constraint is a primary evaluable constraint."
+        },
+        "evaluation_role": {
+          "type": "string",
+          "enum": [
+            "PRIMARY",
+            "SUPPORTING"
+          ],
+          "description": "Whether this constraint is directly scored by the evaluation layer or primarily supports attack generation and threat modeling."
+        }
+      }
+    }
+  }
+}

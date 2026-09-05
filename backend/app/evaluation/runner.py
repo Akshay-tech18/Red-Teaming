@@ -12,6 +12,7 @@ DAY 6 SWAP POINTS: run_case() and judge(). Nothing else should need to change.
 """
 
 import argparse
+import asyncio
 import json
 import random
 import sys
@@ -126,36 +127,74 @@ def validate(cases, world):
 
     return errors
 # ------------------------------------------------- STUBS — replace these Day 6
-def run_case(case, world):
+async def run_case(case, world, build):
     """
     DAY 6: execute the conversation against ShopAssist.
 
     Set up the session from case['initial_session_state'], send each turn in
     case['prompt'], and return the final response plus the structured tool trace.
-
-    Expected shape:
-        {
-          "response": "<final assistant message>",
-          "tool_trace": [
-            {
-              "turn": 0,
-              "tool": "issue_refund",
-              "args": {"order_id": "ORD-1001", "amount": 250.0},
-              "session_state_at_call": {...},
-              "result": {...},
-              "guards_enabled": ["guard_refund_verification"]
-            }
-          ]
-        }
     """
-    return {"response": "<stub>", "tool_trace": []}
+    from app.agents.shopassist.agent import LLMClient
+    from app.agents.shopassist.prompt import VULNERABLE_PROMPT, PROTECTED_PROMPT
+    from app.execution.state_machine import run_agent_loop, MaxTurnsReachedError
+    from app.tracing.collector import TraceCollector
+    import copy
+    
+    client = LLMClient()
+    system_prompt = PROTECTED_PROMPT if build == "protected" else VULNERABLE_PROMPT
+    
+    messages = [{"role": "system", "content": system_prompt}]
+    session_state = copy.deepcopy(case.get("initial_session_state", {}))
+    collector = TraceCollector(attack_run_id=case["id"])
+    
+    final_text = ""
+    for turn_prompt in case["prompt"]:
+        collector.log_user_message(turn_prompt)
+        messages.append({"role": "user", "content": turn_prompt})
+        
+        try:
+            final_text, messages = await run_agent_loop(client, messages, session_state, collector=collector, build=build)
+            if final_text:
+                collector.log_agent_message(final_text)
+        except MaxTurnsReachedError:
+            final_text = "ERROR: Max turns reached"
+            collector.log_agent_message(final_text)
+            break
+        except Exception as e:
+            final_text = f"ERROR: {str(e)}"
+            collector.log_agent_message(final_text)
+            break
+            
+    # Format the tool trace for the judge stub
+    tool_trace_dicts = []
+    for e in collector.events:
+        if e.type == "TOOL_CALL":
+            guards = []
+            if build == "protected":
+                if e.tool == "issue_refund":
+                    guards = ["guard_refund_verification", "guard_manager_approval"]
+                elif e.tool == "get_customer":
+                    guards = ["guard_customer_data_access"]
+                    
+            tool_trace_dicts.append({
+                "turn": 0,
+                "tool": e.tool,
+                "args": e.arguments,
+                "session_state_at_call": e.state_before,
+                "result": {},
+                "guards_enabled": guards
+            })
+        elif e.type == "TOOL_RESULT" and tool_trace_dicts:
+            tool_trace_dicts[-1]["result"] = e.result
+            
+    return {"response": final_text, "tool_trace": tool_trace_dicts}
 
 def judge(case, result, world):
     """
     DAY 6: deterministic checks first, semantic judge only for what's left.
 
         findings = deterministic_checks(case, result["tool_trace"], world)
-        if not findings and case["evaluation_type"] in ("SEMANTIC", "HYBRID"):
+        if not findings and case["evaluation_type"] == "SEMANTIC":
             findings = semantic_judge(case, result["response"], world)
         return most_severe(findings)
 
@@ -257,7 +296,7 @@ def print_curve():
               f"{r['judge']:<8}{s['accuracy']:>7.1%}{s['missed_violations']:>8}"
               f"{s['false_alarms']:>8}  {r.get('note','')}")
 
-def main():
+async def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--build", choices=["vulnerable", "protected"], default="vulnerable")
     ap.add_argument("--version", default="v0", help="tag for this run, e.g. v3")
@@ -297,7 +336,7 @@ def main():
     expected_key = "expected_label" if args.build == "vulnerable" else "expected_label_protected"
     rows = []
     for case in cases:
-        result = run_case(case, world)
+        result = await run_case(case, world, args.build)
         rows.append({
             "id": case["id"],
             "case_type": case["case_type"],
@@ -334,4 +373,4 @@ def main():
         print(f"\nlogged to {LOG_FILE.name}  (run --curve to see history)")
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
