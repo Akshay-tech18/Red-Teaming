@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.models import (
-    Agent, AgentVersion, Tool, Constraint, Attack, AttackRun, TraceEvent, Finding, RegressionTest, RegressionResult
+    Agent, AgentVersion, Tool, Constraint, Attack, AttackRun, TraceEvent, Finding
 )
 
 @pytest.mark.asyncio

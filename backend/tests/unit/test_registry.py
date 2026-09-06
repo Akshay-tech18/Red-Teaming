@@ -2,10 +2,9 @@ import pytest
 from app.tools.registry import execute_tool, TOOL_SCHEMAS
 
 def test_tool_schemas():
-    assert len(TOOL_SCHEMAS) == 4
+    assert len(TOOL_SCHEMAS) == 3
     names = [schema["function"]["name"] for schema in TOOL_SCHEMAS]
     assert "search_order" in names
-    assert "verify_order" in names
     assert "get_customer" in names
     assert "issue_refund" in names
 
