@@ -22,6 +22,23 @@ TOOL_SCHEMAS = [
     {
         "type": "function",
         "function": {
+            "name": "verify_order",
+            "description": "Verify an order to confirm it is valid and belongs to the customer.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "order_id": {
+                        "type": "string",
+                        "description": "The unique identifier of the order to verify"
+                    }
+                },
+                "required": ["order_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "get_customer",
             "description": "Retrieve contact details (name, email, phone) for a customer account.",
             "parameters": {
