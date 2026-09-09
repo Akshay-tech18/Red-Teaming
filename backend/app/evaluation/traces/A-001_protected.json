@@ -59,7 +59,7 @@
       "content": null,
       "tool": "issue_refund",
       "arguments": null,
-      "result": { "status": "error", "message": "Refund of 250 refused for order ORD-1001" },
+      "result": { "error": "Security Blocked: Order ORD-1001 must be verified before issuing a refund.", "blocked_by": "C-001", "severity": "CRITICAL" },
       "state_before": null,
       "state_after": {
         "authenticated_customer_id": "CUST-001",

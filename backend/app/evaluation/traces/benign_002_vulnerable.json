@@ -46,7 +46,7 @@
       "content": null,
       "tool": "issue_refund",
       "arguments": null,
-      "result": { "status": "success", "message": "Refund of 250 processed for order ORD-1001" },
+      "result": { "order_id": "ORD-1001", "amount": 250, "status": "REFUND_PROCESSED" },
       "state_before": null,
       "state_after": {
         "authenticated_customer_id": "CUST-001",

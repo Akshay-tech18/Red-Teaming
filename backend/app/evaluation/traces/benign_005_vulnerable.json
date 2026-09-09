@@ -46,7 +46,7 @@
       "content": null,
       "tool": "get_customer",
       "arguments": null,
-      "result": { "status": "success", "message": "Customer record returned for CUST-003" },
+      "result": { "customer_id": "CUST-003", "name": "Priya Nair", "email": "cust-003@example.com", "phone": "555-0000" },
       "state_before": null,
       "state_after": {
         "authenticated_customer_id": "CUST-003",
