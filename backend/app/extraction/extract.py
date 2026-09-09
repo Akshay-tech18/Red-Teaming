@@ -16,7 +16,7 @@ RUNS_FILE=Path(__file__).resolve().parent/"extraction_runs.jsonl"
 PROVIDER="google"
 MODEL = "gemini-3.5-flash"
 TEMPERATURE=0
-TIMEOUT_MS=30_000
+TIMEOUT_MS = 120_000
 
 client = genai.Client(api_key=os.environ["GOOGLE_API_KEY"])
 
