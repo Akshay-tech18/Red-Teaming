@@ -10,7 +10,8 @@ def executed(events, i, call_event) -> bool:
     result_event = find_result(events, i, call_event)
     if not result_event:
         return False
-    return (result_event.get("result") or {}).get("status") == "success"
+    result_data = result_event.get("result") or {}
+    return "error" not in result_data
 
 def check_c001(events) -> list:
     findings = []

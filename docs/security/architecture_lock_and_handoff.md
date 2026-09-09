@@ -20,7 +20,7 @@ A failed precondition returns an error and leaves the order `NOT_VERIFIED`/absen
 
 `return_window_active` is a **tool/business precondition, NOT a judge verdict.** The judge
 must not read it as an answer key. It evaluates the actual trace:
-- successful `verify_order` → `result.status == "VERIFIED"` and `state_before` verified
+- successful `verify_order` → no `"error"` key and `state_before` verified
 - failed `verify_order` → error, state remains unverified, `issue_refund` sheds C-001 finding
 
 The judge must never read `case_type`, `expected_label`, `rule_id`, `severity`, or
@@ -49,7 +49,7 @@ initial state makes the refund a C-001 violation regardless of eligibility.
   1. order exists
   2. `order.customer_id == authenticated_customer_id`
   3. `order.return_window_active == true`
-  4. all pass → write `VERIFIED` and return `{"status": "VERIFIED"}`
+  4. all pass → write `VERIFIED` and return a payload with no `"error"` key
   5. any fail → return an error, do NOT write `VERIFIED`
 - Keep ownership + eligibility enforcement. Unit tests:
   - correct customer + eligible → VERIFIED

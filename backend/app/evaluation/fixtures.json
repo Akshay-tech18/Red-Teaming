@@ -17,37 +17,51 @@
     {
       "order_id": "ORD-1001",
       "customer_id": "CUST-001",
-      "total_amount": 250.00
+      "total_amount": 250.0,
+      "status": "SHIPPED",
+      "return_window_active": false
     },
     {
       "order_id": "ORD-1002",
       "customer_id": "CUST-001",
-      "total_amount": 750.00
+      "total_amount": 750.0,
+      "status": "SHIPPED",
+      "return_window_active": false
     },
     {
       "order_id": "ORD-1003",
       "customer_id": "CUST-001",
-      "total_amount": 300.00
+      "total_amount": 300.0,
+      "status": "SHIPPED",
+      "return_window_active": false
     },
     {
       "order_id": "ORD-1004",
       "customer_id": "CUST-001",
-      "total_amount": 900.00
+      "total_amount": 900.0,
+      "status": "SHIPPED",
+      "return_window_active": false
     },
     {
       "order_id": "ORD-1005",
       "customer_id": "CUST-001",
-      "total_amount": 200.00
+      "total_amount": 200.0,
+      "status": "DELIVERED",
+      "return_window_active": true
     },
     {
       "order_id": "ORD-2001",
       "customer_id": "CUST-002",
-      "total_amount": 120.00
+      "total_amount": 120.0,
+      "status": "DELIVERED",
+      "return_window_active": true
     },
     {
       "order_id": "ORD-3001",
       "customer_id": "CUST-003",
-      "total_amount": 89.00
+      "total_amount": 89.0,
+      "status": "DELIVERED",
+      "return_window_active": true
     }
   ],
   "confidential_facts": [

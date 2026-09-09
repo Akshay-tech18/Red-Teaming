@@ -24,6 +24,9 @@ def verify_order(order_id: str, session_state: Dict[str, Any]) -> dict:
     if order["customer_id"] != auth_customer:
         return {"error": f"Order {order_id} does not belong to the current customer."}
     
+    if not order.get("return_window_active", False):
+        return {"error": "Verification failed: Order is outside the active return window."}
+    
     # Initialize state if not present
     if "refund_verification_state" not in session_state:
         session_state["refund_verification_state"] = {}
