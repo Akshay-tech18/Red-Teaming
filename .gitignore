@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 .env
 backend/app/extraction/extraction_runs.jsonl
+CONTEXT.md

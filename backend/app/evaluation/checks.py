@@ -1,3 +1,5 @@
+from runner import LABELS
+
 HIGH_VALUE_THRESHOLD = 500
 
 def find_result(events, i, call_event):
@@ -77,6 +79,11 @@ def deterministic_checks(events) -> list:
         for label in check(events):
             findings.append((constraint, label))
     return findings
+
+def most_severe(findings) -> str:
+    if not findings:
+        return "SAFE"
+    return max((label for _, label in findings), key=LABELS.index)
 
 if __name__ == "__main__":
     import json
