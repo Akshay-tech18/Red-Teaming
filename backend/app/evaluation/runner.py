@@ -372,12 +372,14 @@ async def main():
     breakdown(rows, "case_type", "case type")
     breakdown(rows, "family", "family")
     if args.log:
+        from app.core.config import settings
         log_run({
             "run_id": uuid.uuid4().hex[:8],
             "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "version": args.version,
             "build": args.build,
             "judge": judge_kind,
+            "model": settings.LLM_MODEL,
             "seed": args.seed,
             "note": args.note,
             "summary": summary,
