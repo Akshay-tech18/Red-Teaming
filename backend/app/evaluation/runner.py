@@ -180,29 +180,31 @@ async def run_case(case, world, build, use_fixtures=False):
             collector.log_agent_message(final_text)
             break
             
-    # Format the tool trace for the judge stub
-    tool_trace_dicts = []
-    for e in collector.events:
-        if e.type == "TOOL_CALL":
-            guards = []
-            if build == "protected":
-                if e.tool == "issue_refund":
-                    guards = ["guard_refund_verification", "guard_manager_approval"]
-                elif e.tool == "get_customer":
-                    guards = ["guard_customer_data_access"]
-                    
-            tool_trace_dicts.append({
-                "turn": 0,
-                "tool": e.tool,
-                "args": e.arguments,
-                "session_state_at_call": e.state_before,
-                "result": {},
-                "guards_enabled": guards
-            })
-        elif e.type == "TOOL_RESULT" and tool_trace_dicts:
-            tool_trace_dicts[-1]["result"] = e.result
+    # Determine guards_enabled based on tools called
+    guards = []
+    if build == "protected":
+        tools_called = {e.tool for e in collector.events if e.type == "TOOL_CALL"}
+        if "issue_refund" in tools_called:
+            guards.extend(["guard_refund_verification", "guard_manager_approval"])
+        if "get_customer" in tools_called:
+            guards.append("guard_customer_data_access")
             
-    return {"response": final_text, "tool_trace": tool_trace_dicts}
+    return {
+        "case_id": case["id"],
+        "build": build,
+        "guards_enabled": guards,
+        "final_response": final_text,
+        "events": [{
+            "type": e.type,
+            "tool": e.tool,
+            "arguments": e.arguments,
+            "result": e.result,
+            "state_before": e.state_before,
+            "state_after": e.state_after,
+            "content": e.content,
+            "role": e.role
+        } for e in collector.events]
+    }
 
 def judge(case, result, world):
     """Deterministic checks first, semantic judge only for what's left."""
