@@ -148,6 +148,8 @@ async def run_case(case, world, build, use_fixtures=False):
         fixture_path = HERE / "traces" / f"{case['id']}_{build}.json"
         if fixture_path.exists():
             return json.loads(fixture_path.read_text())
+        else:
+            raise FileNotFoundError(f"Fixture mode requested but trace file missing: {fixture_path.name}")
 
     from app.agents.shopassist.agent import LLMClient
     from app.agents.shopassist.prompt import VULNERABLE_PROMPT, PROTECTED_PROMPT
