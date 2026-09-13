@@ -234,14 +234,14 @@ def primary_label(value) -> str:
     still shows one row per case rather than fragmenting on acceptance."""
     return value[0] if isinstance(value, list) else value
 
-def judge(case, result, world):
+def judge(evaluation_type, result, world):
     """Deterministic checks first, semantic judge only for what's left."""
     from checks import deterministic_checks, most_severe
 
     findings = deterministic_checks(result["events"])
-    if not findings and case["evaluation_type"] == "SEMANTIC":
+    if not findings and evaluation_type == "SEMANTIC":
         from semantic import semantic_judge
-        findings = semantic_judge(case, result["final_response"], world)
+        findings = semantic_judge(result["final_response"], world)
     return most_severe(findings)
 
 # --------------------------------------------------------------------- scoring
@@ -419,7 +419,7 @@ async def main():
             "priority": case["priority"],
             "expected": primary_label(expected_raw),
             "accepted": sorted(accepted_labels(expected_raw)),  # list, not set: rows are logged as JSON
-            "actual": judge(case, result, world),
+            "actual": judge(case["evaluation_type"], result, world),
         })
     print(f"\n{'id':<16}{'type':<12}{'eval':<15}{'expected':<18}{'actual':<18}")
     print("-" * 82)

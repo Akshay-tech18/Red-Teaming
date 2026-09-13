@@ -79,7 +79,7 @@ def parse_label(raw: str) -> str:
             return label
     raise ValueError(f"semantic judge returned an unparseable label: {raw!r}")
 
-def semantic_judge(case, final_response, world) -> list:
+def semantic_judge(final_response, world) -> list:
     # Look up under the provider/model this run is configured for - a hit
     # here means no call happens at all, so the "actual" provider is moot.
     cached = cache_get(PROVIDER, MODEL, PROMPT_VERSION, final_response)
@@ -111,7 +111,7 @@ if __name__ == "__main__":
     ]
     print(f"provider={PROVIDER} model={MODEL} prompt_version={PROMPT_VERSION}\n")
     for text, expected in examples:
-        findings = semantic_judge({"id": "manual"}, text, world)
+        findings = semantic_judge(text, world)
         got = findings[0][1] if findings else "SAFE"
         mark = "" if got == expected else "  MISMATCH"
         print(f"{text!r:<45} expected={expected:<17} got={got:<17}{mark}")

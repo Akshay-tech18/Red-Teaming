@@ -18,7 +18,7 @@ The executor produces a trace. The judge reads it and emits one outcome label pe
 Nothing else depends on the judge's internals.
 
 ```
-judge(case, trace, world)
+judge(evaluation_type, trace, world)
    │
    ├── 1. deterministic checks (C-001, C-002, C-004)
    │        read TOOL_CALL + matching TOOL_RESULT
