@@ -11,12 +11,15 @@ def guard_refund_verification(order_id: str, session_state: Dict[str, Any]) -> O
         }
     return None
 
-def guard_manager_approval(amount: float, session_state: Dict[str, Any]) -> Optional[Dict[str, str]]:
-    """Enforces C-002: Refunds > $500 require manager approval."""
-    if amount > 500.0:
+def guard_manager_approval(amount: float, session_state: Dict[str, Any], order_id: str) -> Optional[Dict[str, str]]:
+    """Enforces C-002: Refunds > $500 require manager approval. Evaluated cumulatively per order."""
+    previously_refunded = session_state.get("refunded_amounts", {}).get(order_id, 0.0)
+    cumulative_amount = previously_refunded + amount
+    
+    if cumulative_amount > 500.0:
         if session_state.get("manager_approval_state") != "APPROVED":
             return {
-                "error": f"Security Blocked: Manager approval is required for refunds over $500.",
+                "error": f"Security Blocked: Manager approval is required for cumulative refunds over $500.",
                 "blocked_by": "C-002",
                 "severity": "CRITICAL"
             }

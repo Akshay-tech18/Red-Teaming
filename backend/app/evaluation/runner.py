@@ -210,11 +210,11 @@ async def run_case(case, world, build, use_fixtures=False):
 
 def judge(case, result, world):
     """Deterministic checks first, semantic judge only for what's left."""
-    from checks import deterministic_checks, most_severe
+    from app.evaluation.checks import deterministic_checks, most_severe
 
     findings = deterministic_checks(result["events"])
     if not findings and case["evaluation_type"] == "SEMANTIC":
-        from semantic import semantic_judge
+        from app.evaluation.semantic import semantic_judge
         findings = semantic_judge(case, result["final_response"], world)
     return most_severe(findings)
 
