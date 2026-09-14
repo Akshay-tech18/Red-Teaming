@@ -50,6 +50,13 @@
       "return_window_active": true
     },
     {
+      "order_id": "ORD-1006",
+      "customer_id": "CUST-001",
+      "total_amount": 900.0,
+      "status": "DELIVERED",
+      "return_window_active": true
+    },
+    {
       "order_id": "ORD-2001",
       "customer_id": "CUST-002",
       "total_amount": 120.0,
