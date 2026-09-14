@@ -2,18 +2,29 @@ import React, { useState } from 'react';
 import { 
   Search, 
   ChevronDown, 
-  CheckCircle2, 
   AlertTriangle, 
-  Star,
-  ArrowRight,
-  ShieldAlert,
-  Code2
+  Edit3, 
+  Plus, 
+  Sparkles, 
+  X, 
+  Save
 } from 'lucide-react';
 
-export default function ConstraintsView({ constraints = [], onNavigateTo }) {
+export default function ConstraintsView({ 
+  constraints = [], 
+  onNavigateTo,
+  onUpdateConstraint,
+  onAddConstraint
+}) {
   const [search, setSearch] = useState('');
   const [severityFilter, setSeverityFilter] = useState('ALL');
   const [evalFilter, setEvalFilter] = useState('ALL');
+
+  // Modal State
+  const [activeModal, setActiveModal] = useState(null); // 'edit' | 'add' | null
+  const [formData, setFormData] = useState(null);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [extractionToast, setExtractionToast] = useState(null);
 
   const filtered = constraints.filter((c) => {
     const matchesSearch =
@@ -34,26 +45,107 @@ export default function ConstraintsView({ constraints = [], onNavigateTo }) {
     if (c.id === 'C-004' || c.id === 'C-005') attack = 'A-004';
     if (c.id === 'C-009') attack = 'A-009';
     if (c.id === 'C-002') attack = 'A-001';
+    if (c.id.startsWith('C-HR')) attack = 'A-HR-001';
 
     return { policy, attack };
   };
 
+  const handleOpenEdit = (c) => {
+    setFormData({ ...c });
+    setActiveModal('edit');
+  };
+
+  const handleOpenAdd = () => {
+    const nextNum = constraints.length + 1;
+    const newId = `C-${String(nextNum).padStart(3, '0')}`;
+    setFormData({
+      id: newId,
+      title: '',
+      source_policy: 'P-001',
+      primary_surface: 'issue_refund',
+      forbidden_action: '',
+      required_condition: '',
+      severity: 'CRITICAL',
+      evaluation_type: 'DETERMINISTIC',
+      description: ''
+    });
+    setActiveModal('add');
+  };
+
+  const handleSaveModal = (e) => {
+    e.preventDefault();
+    if (!formData.title || !formData.forbidden_action) return;
+
+    if (activeModal === 'edit' && onUpdateConstraint) {
+      onUpdateConstraint(formData);
+    } else if (activeModal === 'add' && onAddConstraint) {
+      onAddConstraint(formData);
+    }
+    setActiveModal(null);
+    setFormData(null);
+  };
+
+  const handleTriggerReExtraction = () => {
+    setIsExtracting(true);
+    setExtractionToast('Extracting structured constraints from enterprise policies via LLM Schema Extractor...');
+    setTimeout(() => {
+      setIsExtracting(false);
+      setExtractionToast('Extraction Complete: 6 Invariants synced and validated against Policy Schema v1.0');
+      setTimeout(() => setExtractionToast(null), 4000);
+    }, 1400);
+  };
+
   return (
     <div className="space-y-6 animate-view-fade">
-      {/* Header with high-contrast type scale */}
-      <div>
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold tracking-tight text-white font-sans">
-            Extracted Security Constraints
-          </h1>
-          <span className="px-2.5 py-0.5 rounded-sm text-xs font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30 tracking-wider">
-            {constraints.length} Enforced Rules
-          </span>
+      {/* Header with high-contrast type scale & Action Buttons */}
+      <div className="flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold tracking-tight text-white font-sans">
+              Extracted Security Constraints
+            </h1>
+            <span className="px-2.5 py-0.5 rounded-sm text-xs font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30 tracking-wider">
+              {constraints.length} Enforced Invariants
+            </span>
+          </div>
+          <p className="text-xs text-slate-400 mt-1 max-w-3xl">
+            Formal preconditions, forbidden execution vectors, and deterministic verification criteria extracted from corporate security policies. Editable for scenario modeling.
+          </p>
         </div>
-        <p className="text-xs text-slate-400 mt-1 max-w-3xl">
-          Formal preconditions, forbidden execution vectors, and deterministic verification criteria extracted from corporate security policies.
-        </p>
+
+        {/* Action Controls: Add Rule & Re-Extract */}
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={handleTriggerReExtraction}
+            disabled={isExtracting}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-white/[0.04] hover:bg-white/[0.08] border border-app-border text-xs font-mono text-slate-300 transition-all shadow-sm"
+          >
+            <Sparkles className={`w-3.5 h-3.5 text-blue-400 ${isExtracting ? 'animate-spin' : ''}`} />
+            <span>{isExtracting ? 'Extracting...' : 'Re-extract from Policy'}</span>
+          </button>
+
+          <button
+            onClick={handleOpenAdd}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-blue-600 hover:bg-blue-500 text-white text-xs font-mono font-semibold transition-all shadow-[0_0_12px_rgba(59,130,246,0.3)]"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Custom Rule</span>
+          </button>
+        </div>
       </div>
+
+      {/* Extraction Feedback Toast */}
+      {extractionToast && (
+        <div className="p-3 rounded-sm bg-blue-950/40 border border-blue-500/50 text-xs font-mono text-blue-200 flex items-center justify-between animate-fadeIn">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-blue-400 shrink-0" />
+            <span>{extractionToast}</span>
+          </div>
+          <button onClick={() => setExtractionToast(null)} className="text-slate-400 hover:text-white">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Filter Toolbar with Sharp Borders */}
       <div className="flex items-center gap-3 flex-wrap">
@@ -78,6 +170,7 @@ export default function ConstraintsView({ constraints = [], onNavigateTo }) {
             <option value="ALL">All Severities</option>
             <option value="CRITICAL">CRITICAL</option>
             <option value="HIGH">HIGH</option>
+            <option value="MEDIUM">MEDIUM</option>
           </select>
           <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
@@ -98,7 +191,7 @@ export default function ConstraintsView({ constraints = [], onNavigateTo }) {
         </div>
       </div>
 
-      {/* Constraints Data Cards with Hierarchical Contrast & Linkage Chips */}
+      {/* Constraints Data Cards with Hierarchical Contrast, Edit Buttons & Linkage Chips */}
       <div className="space-y-3">
         {filtered.map((c) => {
           const isCritical = c.severity === 'CRITICAL';
@@ -107,13 +200,13 @@ export default function ConstraintsView({ constraints = [], onNavigateTo }) {
           return (
             <div
               key={c.id}
-              className={`p-4 rounded-sm border transition-all space-y-3 ${
+              className={`p-4 rounded-sm border transition-all space-y-3 relative group ${
                 isCritical
                   ? 'bg-[#120c10] border-red-500/30 border-l-4 border-l-red-500 shadow-panel'
                   : 'bg-app-card/70 border-app-borderSubtle hover:border-slate-700'
               }`}
             >
-              {/* Header row: ID, Title, Severity, Evaluation Type */}
+              {/* Header row: ID, Title, Severity, Evaluation Type, Edit Button */}
               <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div className="flex items-center gap-2.5 flex-wrap">
                   {/* Small monospace badge */}
@@ -149,6 +242,15 @@ export default function ConstraintsView({ constraints = [], onNavigateTo }) {
                   <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono text-slate-300 bg-black/40 border border-slate-800">
                     {c.evaluation_type}
                   </span>
+
+                  {/* Quick Edit Button (Day 4 Deliverable) */}
+                  <button
+                    onClick={() => handleOpenEdit(c)}
+                    className="p-1.5 rounded-sm bg-white/[0.04] hover:bg-white/[0.1] border border-slate-800 text-slate-400 hover:text-white transition-all"
+                    title="Edit Constraint Invariant"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
 
@@ -201,6 +303,133 @@ export default function ConstraintsView({ constraints = [], onNavigateTo }) {
           );
         })}
       </div>
+
+      {/* Edit / Add Constraint Modal (Day 4 Editable Fields) */}
+      {activeModal && formData && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-[#0b101a] border border-slate-700 rounded-sm max-w-lg w-full p-5 space-y-4 shadow-2xl animate-scaleUp">
+            <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+              <div className="flex items-center gap-2">
+                <Edit3 className="w-4 h-4 text-blue-400" />
+                <h3 className="text-sm font-bold text-white font-mono">
+                  {activeModal === 'edit' ? `Edit Invariant (${formData.id})` : 'Add New Security Invariant'}
+                </h3>
+              </div>
+              <button
+                onClick={() => { setActiveModal(null); setFormData(null); }}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveModal} className="space-y-3 font-sans text-xs">
+              <div>
+                <label className="block text-slate-300 font-mono mb-1">Title</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  placeholder="e.g. Refund Requires Pre-Verified Order ID"
+                  className="w-full bg-[#060a12] border border-slate-800 rounded-sm p-2 text-slate-200 font-mono text-xs focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-mono mb-1">Severity</label>
+                  <select
+                    value={formData.severity}
+                    onChange={(e) => setFormData({ ...formData, severity: e.target.value })}
+                    className="w-full bg-[#060a12] border border-slate-800 rounded-sm p-2 text-slate-200 font-mono text-xs focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="CRITICAL">CRITICAL</option>
+                    <option value="HIGH">HIGH</option>
+                    <option value="MEDIUM">MEDIUM</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-mono mb-1">Evaluation Type</label>
+                  <select
+                    value={formData.evaluation_type}
+                    onChange={(e) => setFormData({ ...formData, evaluation_type: e.target.value })}
+                    className="w-full bg-[#060a12] border border-slate-800 rounded-sm p-2 text-slate-200 font-mono text-xs focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="DETERMINISTIC">DETERMINISTIC</option>
+                    <option value="HYBRID">HYBRID</option>
+                    <option value="SEMANTIC">SEMANTIC</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-mono mb-1">Primary Surface / Tool</label>
+                <input
+                  type="text"
+                  value={formData.primary_surface}
+                  onChange={(e) => setFormData({ ...formData, primary_surface: e.target.value })}
+                  placeholder="e.g. issue_refund or get_customer"
+                  className="w-full bg-[#060a12] border border-slate-800 rounded-sm p-2 text-slate-200 font-mono text-xs focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-red-400 font-mono mb-1">Forbidden Action</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.forbidden_action}
+                  onChange={(e) => setFormData({ ...formData, forbidden_action: e.target.value })}
+                  placeholder="e.g. Execute issue_refund without verified order state"
+                  className="w-full bg-[#060a12] border border-red-500/30 rounded-sm p-2 text-red-200 font-mono text-xs focus:border-red-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-emerald-400 font-mono mb-1">Required Condition (Precondition)</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.required_condition}
+                  onChange={(e) => setFormData({ ...formData, required_condition: e.target.value })}
+                  placeholder="e.g. order_verification_state[order_id] == VERIFIED"
+                  className="w-full bg-[#060a12] border border-emerald-500/30 rounded-sm p-2 text-emerald-200 font-mono text-xs focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-mono mb-1">Description</label>
+                <textarea
+                  rows={2}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Details explaining why this constraint is enforced..."
+                  className="w-full bg-[#060a12] border border-slate-800 rounded-sm p-2 text-slate-200 font-mono text-xs focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/[0.06]">
+                <button
+                  type="button"
+                  onClick={() => { setActiveModal(null); setFormData(null); }}
+                  className="px-3 py-1.5 rounded-sm bg-white/[0.05] hover:bg-white/[0.08] text-slate-300 font-mono text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-sm bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs font-semibold shadow-md"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Save Invariant</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

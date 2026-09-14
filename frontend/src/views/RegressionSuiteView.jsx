@@ -2,15 +2,16 @@ import React, { useState } from 'react';
 import { 
   GitCompare, 
   CheckCircle, 
-  AlertTriangle, 
   RotateCw, 
   ShieldCheck, 
-  ShieldAlert,
-  ArrowRight,
-  Check,
-  X,
-  AlertOctagon,
-  Flame
+  ShieldAlert, 
+  ArrowRight, 
+  Check, 
+  X, 
+  AlertOctagon, 
+  Flame, 
+  Undo2,
+  Bug
 } from 'lucide-react';
 
 export default function RegressionSuiteView({ 
@@ -21,6 +22,8 @@ export default function RegressionSuiteView({
 }) {
   const [tests, setTests] = useState(regressionTests);
   const [rerunningId, setRerunningId] = useState(null);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [activeRegressionAlert, setActiveRegressionAlert] = useState(null);
 
   const handleRerun = (testId) => {
     setRerunningId(testId);
@@ -32,6 +35,43 @@ export default function RegressionSuiteView({
         )
       );
     }, 600);
+  };
+
+  // Day 17: Interactive Breaking Change Simulation
+  const handleSimulateBreakingChange = () => {
+    setIsSimulating(true);
+    setTimeout(() => {
+      setIsSimulating(false);
+      // Simulate regressed state
+      const regressedTests = tests.map((t) => {
+        if (t.attack_id === 'A-001') {
+          return {
+            ...t,
+            test_version: 'v1.2 (Regressed Commit #f42c19)',
+            baseline_label: 'ATTEMPT_BLOCKED',
+            new_label: 'CRITICAL_ACTION',
+            status_diff: 'REGRESSION',
+            last_run: new Date().toISOString()
+          };
+        }
+        return t;
+      });
+      setTests(regressedTests);
+      setActiveRegressionAlert({
+        commit: 'git commit #f42c19 ("refactor: optimize refund latency by removing precondition checks")',
+        attack_id: 'A-001',
+        vulnerability: 'Refund Precondition Invariant (C-001) Bypassed',
+        baseline: 'ATTEMPT_BLOCKED (v1.1 Protected)',
+        regressed: 'CRITICAL_ACTION (v1.2)',
+        financial_impact: '$250.00 Unauthorized Store Ledger Debit'
+      });
+    }, 1200);
+  };
+
+  const handleRollback = () => {
+    setActiveRegressionAlert(null);
+    setTests(regressionTests);
+    if (setVersion) setVersion('ver-1.1');
   };
 
   const getVerdictDiffDisplay = (baseline, current, isReg, isImprove) => {
@@ -64,20 +104,93 @@ export default function RegressionSuiteView({
 
   return (
     <div className="space-y-6 animate-view-fade">
-      {/* Header with high-contrast type scale */}
-      <div>
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold tracking-tight text-white font-sans">
-            Fix Verification &amp; Continuous Regression
-          </h1>
-          <span className="px-2.5 py-0.5 rounded-sm text-xs font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30 tracking-wider">
-            Regression Engine
-          </span>
+      {/* Header with high-contrast type scale & Interactive Simulation Trigger */}
+      <div className="flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold tracking-tight text-white font-sans">
+              Fix Verification &amp; Continuous Regression
+            </h1>
+            <span className="px-2.5 py-0.5 rounded-sm text-xs font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30 tracking-wider">
+              Day 17 Regression Engine
+            </span>
+          </div>
+          <p className="text-xs text-slate-400 mt-1 max-w-3xl">
+            Side-by-side behavioral comparator and automated regression suite. Verifies that deploying prompt or code guards resolves target exploits without regressing benign or edge scenarios.
+          </p>
         </div>
-        <p className="text-xs text-slate-400 mt-1 max-w-3xl">
-          Side-by-side behavioral comparator and automated regression suite. Verifies that deploying prompt or code guards resolves target exploits without regressing benign or edge scenarios.
-        </p>
+
+        {/* Interactive Breaking Change Trigger (Day 17 Punchline) */}
+        <div className="flex items-center gap-2">
+          {activeRegressionAlert ? (
+            <button
+              onClick={handleRollback}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-semibold transition-all shadow-md"
+            >
+              <Undo2 className="w-3.5 h-3.5" />
+              <span>Rollback to Protected v1.1</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleSimulateBreakingChange}
+              disabled={isSimulating}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-sm bg-red-600/90 hover:bg-red-500 text-white font-mono text-xs font-semibold transition-all shadow-[0_0_14px_rgba(239,68,68,0.3)] animate-pulse"
+            >
+              <Bug className="w-3.5 h-3.5" />
+              <span>{isSimulating ? 'Simulating Git Commit & Rerunning Suite...' : 'Simulate Future Breaking Change (v1.2)'}</span>
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Day 17 High-Impact "SECURITY REGRESSION DETECTED" Alert Banner */}
+      {activeRegressionAlert && (
+        <div className="p-5 rounded-sm bg-gradient-to-r from-red-950/90 via-[#200a10] to-red-950/70 border-2 border-red-500 shadow-[0_0_24px_rgba(239,68,68,0.35)] space-y-3 animate-verdict-flash">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-sm bg-red-600 text-white shadow-lg animate-bounce">
+                <AlertOctagon className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-[10.5px] font-mono uppercase tracking-widest text-red-300 font-bold">
+                  CI/CD PIPELINE HALTED · AUTOMATIC THREAT DETECTION
+                </div>
+                <div className="text-lg font-bold font-mono text-white tracking-tight flex items-center gap-2">
+                  <span>🚨 SECURITY REGRESSION DETECTED</span>
+                  <span className="text-xs px-2 py-0.5 bg-red-500/20 text-red-300 border border-red-500/40 rounded font-normal">
+                    P0 Invariant Breached
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handleRollback}
+              className="px-3 py-1 bg-white/10 hover:bg-white/20 border border-red-400/50 text-white font-mono text-xs rounded-sm transition-all"
+            >
+              Revert Commit #f42c19
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-red-500/30 text-xs font-mono">
+            <div className="p-2.5 bg-black/40 rounded-sm border border-red-500/30">
+              <span className="text-red-400 block text-[10px] uppercase font-bold">Culprit Git Commit:</span>
+              <span className="text-slate-200">{activeRegressionAlert.commit}</span>
+            </div>
+
+            <div className="p-2.5 bg-black/40 rounded-sm border border-red-500/30">
+              <span className="text-red-400 block text-[10px] uppercase font-bold">Behavioral Shift:</span>
+              <span className="line-through text-emerald-400 mr-2">{activeRegressionAlert.baseline}</span>
+              <span className="text-red-300 font-bold">→ {activeRegressionAlert.regressed}</span>
+            </div>
+
+            <div className="p-2.5 bg-black/40 rounded-sm border border-red-500/30">
+              <span className="text-red-400 block text-[10px] uppercase font-bold">Consequence:</span>
+              <span className="text-amber-300 font-bold">{activeRegressionAlert.financial_impact}</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Side-by-Side Version Comparator with ✕ and ✓ items */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -116,8 +229,8 @@ export default function RegressionSuiteView({
 
           <button
             onClick={() => {
-              setVersion('ver-1.0');
-              onRunAttack('A-001');
+              if (setVersion) setVersion('ver-1.0');
+              if (onRunAttack) onRunAttack('A-001');
             }}
             className="w-full py-1.5 rounded-sm bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-mono font-semibold transition-all mt-2"
           >
@@ -160,8 +273,8 @@ export default function RegressionSuiteView({
 
           <button
             onClick={() => {
-              setVersion('ver-1.1');
-              onRunAttack('A-001');
+              if (setVersion) setVersion('ver-1.1');
+              if (onRunAttack) onRunAttack('A-001');
             }}
             className="w-full py-1.5 rounded-sm bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-mono font-semibold transition-all mt-2"
           >
@@ -176,7 +289,7 @@ export default function RegressionSuiteView({
           <div className="flex items-center gap-2">
             <GitCompare className="w-4 h-4 text-blue-400" />
             <h3 className="text-xs uppercase font-mono tracking-wider text-slate-300 font-bold">
-              Continuous Verification Suite
+              Continuous Invariant Regression Suite
             </h3>
           </div>
           <span className="text-[10px] font-mono text-slate-400">
@@ -222,8 +335,8 @@ export default function RegressionSuiteView({
                       <div className="font-semibold text-white flex items-center gap-1.5">
                         <span>{t.attack_name}</span>
                         {isReg && (
-                          <span className="px-1.5 py-0.2 rounded-sm text-[9px] font-mono font-bold bg-red-500/20 text-red-400 border border-red-500/40">
-                            ALERT
+                          <span className="px-1.5 py-0.2 rounded-sm text-[9px] font-mono font-bold bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse">
+                            REGRESSION ALERT
                           </span>
                         )}
                       </div>
@@ -256,7 +369,7 @@ export default function RegressionSuiteView({
                         }`}
                       >
                         {isReg ? (
-                          <Flame className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                          <Flame className="w-3.5 h-3.5 text-red-400 shrink-0 animate-bounce" />
                         ) : isImprove ? (
                           <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                         ) : (

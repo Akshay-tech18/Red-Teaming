@@ -1,4 +1,4 @@
-import { INITIAL_DATA } from './seedData';
+import { INITIAL_DATA, BENCHMARK_EVAL_DATA } from './seedData';
 
 class GuardianAPIClient {
   constructor(baseUrl = 'http://localhost:8000/api/v1') {
@@ -98,6 +98,27 @@ class GuardianAPIClient {
     return INITIAL_DATA.agent;
   }
 
+  async saveAgentVersion(agentId, versionPayload) {
+    if (this.isOnline) {
+      try {
+        const res = await fetch(`${this.baseUrl}/agents/${agentId}/versions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(versionPayload)
+        });
+        if (res.ok) return await res.json();
+      } catch (e) {
+        console.warn('API save version failed, persisting locally:', e);
+      }
+    }
+    return {
+      id: `ver-${Date.now()}`,
+      agent_id: agentId,
+      ...versionPayload,
+      created_at: new Date().toISOString()
+    };
+  }
+
   async getAttacks(constraintId = null) {
     if (this.isOnline) {
       try {
@@ -124,7 +145,7 @@ class GuardianAPIClient {
   async runAttack(attackId, agentVersionId, onProgress = null) {
     if (onProgress) onProgress({ status: 'LAUNCHING', stage: 'Initializing target sandbox & state' });
 
-    const isProtected = agentVersionId === 'ver-1.1' || String(agentVersionId).toLowerCase().includes('protected');
+    const isProtected = agentVersionId === 'ver-1.1' || agentVersionId === 'docu-1.1' || String(agentVersionId).toLowerCase().includes('protected');
     const buildMode = isProtected ? 'protected' : 'vulnerable';
 
     if (this.isOnline) {
@@ -182,8 +203,8 @@ class GuardianAPIClient {
           run.events = events;
           run.finding = {
             label: run.deterministic_label || (isProtected ? 'ATTEMPT_BLOCKED' : 'CRITICAL_ACTION'),
-            confidence: 0.96,
-            rationale: run.final_response || 'Execution complete.',
+            confidence: 0.98,
+            rationale: run.final_response || 'Execution evaluation complete.',
           };
           return run;
         }
@@ -207,11 +228,27 @@ class GuardianAPIClient {
       }, 1250);
 
       setTimeout(() => {
-        const key = isProtected ? `${attackId}_v1.1` : `${attackId}_v1.0`;
+        let key = isProtected ? `${attackId}_v1.1` : `${attackId}_v1.0`;
+        if (attackId.startsWith('A-HR')) {
+          key = isProtected ? `${attackId}_docu-1.1` : `${attackId}_docu-1.0`;
+        }
         const trace = INITIAL_DATA.sample_traces[key] || INITIAL_DATA.sample_traces['A-001_v1.0'];
         resolve(trace);
       }, 1600);
     });
+  }
+
+  async getFindings(runId = null) {
+    if (this.isOnline) {
+      try {
+        const url = runId ? `${this.baseUrl}/findings?attack_run_id=${runId}` : `${this.baseUrl}/findings`;
+        const res = await fetch(url);
+        if (res.ok) return await res.json();
+      } catch (e) {
+        console.warn('API fallback for findings:', e);
+      }
+    }
+    return [];
   }
 
   async getRegressionTests() {
@@ -224,6 +261,18 @@ class GuardianAPIClient {
       }
     }
     return INITIAL_DATA.regression_tests;
+  }
+
+  async getEvaluationMetrics() {
+    if (this.isOnline) {
+      try {
+        const res = await fetch(`${this.baseUrl}/evaluations/metrics`);
+        if (res.ok) return await res.json();
+      } catch (e) {
+        console.warn('API fallback for eval metrics:', e);
+      }
+    }
+    return BENCHMARK_EVAL_DATA;
   }
 }
 

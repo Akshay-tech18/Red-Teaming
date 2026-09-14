@@ -1,18 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import HumanLabelingModal from '../components/HumanLabelingModal';
 import { 
-  Play, 
-  RotateCcw, 
   ShieldCheck, 
-  ShieldAlert, 
   AlertOctagon, 
   CheckCircle, 
-  Clock, 
   Terminal,
   Activity,
-  Layers,
   Flame,
   AlertTriangle,
-  ArrowRight
+  UserCheck
 } from 'lucide-react';
 
 export default function LiveExecutionView({ 
@@ -27,6 +23,8 @@ export default function LiveExecutionView({
 }) {
   const isProtected = currentVersion === 'ver-1.1' || String(currentVersion).includes('protected');
   const [displayedEvents, setDisplayedEvents] = useState([]);
+  const [isLabelModalOpen, setIsLabelModalOpen] = useState(false);
+  const [humanAuditRecord, setHumanAuditRecord] = useState(null);
   const [verdictFlashKey, setVerdictFlashKey] = useState(0);
 
   const rawEvents = activeRun?.events || [];
@@ -283,6 +281,33 @@ export default function LiveExecutionView({
             <span className="text-slate-400 font-bold tracking-wider">// EVALUATOR RATIONALE: </span>
             {activeRun.finding?.rationale || 'Evaluation analysis complete.'}
           </div>
+
+          {/* Day 11 Human Review / Audit Action Bar */}
+          <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] flex-wrap gap-2 text-xs font-mono">
+            <div className="flex items-center gap-2 text-slate-400 text-[11px]">
+              <UserCheck className="w-3.5 h-3.5 text-blue-400" />
+              <span>HUMAN-IN-THE-LOOP AUDIT:</span>
+              {humanAuditRecord ? (
+                <span className={`px-2 py-0.5 rounded-sm font-bold ${
+                  humanAuditRecord.is_agreement 
+                    ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/40' 
+                    : 'bg-amber-950/60 text-amber-300 border border-amber-500/40'
+                }`}>
+                  {humanAuditRecord.human_label} ({humanAuditRecord.is_agreement ? 'AGREED' : 'DISPUTED'})
+                </span>
+              ) : (
+                <span className="text-slate-500">Unreviewed by Human (Automated Hybrid Verdict)</span>
+              )}
+            </div>
+
+            <button
+              onClick={() => setIsLabelModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-sm bg-white/[0.05] hover:bg-white/[0.1] border border-slate-700 hover:border-slate-500 text-slate-200 text-xs font-mono transition-all"
+            >
+              <UserCheck className="w-3.5 h-3.5 text-blue-400" />
+              <span>{humanAuditRecord ? 'Update Human Label' : 'Review & Submit Ground-Truth Label'}</span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -319,7 +344,6 @@ export default function LiveExecutionView({
         {/* Trace Terminal Log Stream */}
         <div className="p-4 space-y-2 font-mono text-xs max-h-[600px] overflow-y-auto">
           {displayedEvents.map((evt, idx) => {
-            const isSecurity = evt.type === 'SECURITY_EVENT' || evt.type === 'POLICY_INTERCEPT';
             const isTool = evt.type === 'TOOL_CALL' || evt.type === 'TOOL_RESULT';
 
             return (
@@ -420,6 +444,16 @@ export default function LiveExecutionView({
           })}
         </div>
       </div>
+
+      {/* Day 11 Human Labeling & Review Modal */}
+      <HumanLabelingModal
+        isOpen={isLabelModalOpen}
+        onClose={() => setIsLabelModalOpen(false)}
+        runData={activeRun}
+        attack={attack}
+        currentVersion={currentVersion}
+        onSaveLabel={(record) => setHumanAuditRecord(record)}
+      />
     </div>
   );
 }

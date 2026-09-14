@@ -4,9 +4,11 @@ import {
   Download, 
   Zap, 
   ShieldCheck, 
-  AlertCircle,
-  Sparkles,
-  Bot
+  AlertCircle, 
+  Sparkles, 
+  Play, 
+  ChevronDown,
+  BookOpen
 } from 'lucide-react';
 
 export default function TopBar({ 
@@ -18,20 +20,22 @@ export default function TopBar({
   onToggleCoPilot,
   onRunDemo, 
   onExport,
+  onExportAuditReport,
+  onStartTour,
+  activeTargetId = 'shopassist',
+  onSwitchTarget,
   logoInHeader = true,
   onReplayLogo
 }) {
-  const isVulnerable = currentVersion === 'ver-1.0';
+  const isVulnerable = currentVersion === 'ver-1.0' || currentVersion === 'docu-1.0';
   const [hoveredOption, setHoveredOption] = useState(null);
 
   return (
     <header className="h-16 w-full bg-gradient-to-b from-[#0e1424] via-[#0b101c] to-[#080c15] border-b border-white/[0.08] shadow-[0_4px_20px_rgba(0,0,0,0.4)] backdrop-blur-md sticky top-0 z-30 select-none">
-      <div className="max-w-[1440px] w-full mx-auto px-6 md:px-8 h-full flex items-center justify-between gap-3 lg:gap-5 overflow-x-auto">
+      <div className="max-w-[1440px] w-full mx-auto px-4 md:px-6 h-full flex items-center justify-between gap-2 lg:gap-3">
         
         {/* ================================================================
-            ZONE 1: Brand & Platform Identity (Point 1 & 4)
-            - Fixed nowrap, min-width to prevent title wrap
-            - Shared layoutId for continuous morphing animation from splash
+            ZONE 1: Brand & Platform Identity
             ================================================================ */}
         <div className="flex items-center gap-3 shrink-0 min-w-max">
           {logoInHeader ? (
@@ -45,7 +49,7 @@ export default function TopBar({
                 damping: 22,
                 mass: 1.1
               }}
-              className="flex items-center gap-3 shrink-0 min-w-max cursor-pointer group"
+              className="flex items-center gap-2.5 shrink-0 min-w-max cursor-pointer group"
             >
               <motion.div 
                 layoutId="brand-logo-glyph"
@@ -69,7 +73,6 @@ export default function TopBar({
               </div>
             </motion.div>
           ) : (
-            /* Invisible layout placeholder so other zones don't shift */
             <div className="flex items-center gap-3 opacity-0 pointer-events-none select-none">
               <div className="w-8 h-8 rounded-md" />
               <div className="flex flex-col justify-center">
@@ -84,62 +87,55 @@ export default function TopBar({
         <div className="h-6 w-px bg-white/10 shrink-0 hidden sm:block" />
 
         {/* ================================================================
-            ZONE 2: Target Agent & Segmented Mode Toggle (Point 1, 2, 3, 9)
-            - Shared rounded-full pill container with sliding background
-            - Standardized rounded-md target chip
+            ZONE 2: Multi-Target Switcher & Version Toggle (Day 18 & Day 13)
             ================================================================ */}
-        <div className="flex items-center gap-3 shrink-0">
-          {/* Target Profile Chip */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#0e1422]/90 border border-white/10 text-xs font-mono shadow-sm">
-            <span className="text-slate-400 text-[10px] font-bold tracking-wider uppercase">TARGET</span>
-            <span className="font-semibold text-white text-xs font-sans">{agent?.name || 'ShopAssist'}</span>
+        <div className="flex items-center gap-2.5 shrink-0">
+          {/* Multi-Target Switcher Dropdown (Day 18 Stretch Goal) */}
+          <div className="relative">
+            <select
+              value={activeTargetId}
+              onChange={(e) => onSwitchTarget && onSwitchTarget(e.target.value)}
+              className="h-8 pl-2.5 pr-7 text-xs font-mono bg-[#0c121e] border border-white/15 rounded-md text-white focus:outline-none focus:border-blue-500 appearance-none cursor-pointer hover:bg-white/[0.04] transition-all shadow-sm"
+              title="Switch Target Agent Architecture"
+            >
+              <option value="shopassist">Target: ShopAssist (E-Commerce)</option>
+              <option value="docubot">Target: DocuBot (HR &amp; Salary)</option>
+            </select>
+            <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
-          {/* Unified Sliding-Pill Version Toggle (Point 2 & 9) */}
-          <div className="relative flex items-center p-1 rounded-full bg-[#060912] border border-white/10 shadow-inner">
-            {/* Sliding background pill indicator */}
+          {/* Unified Sliding-Pill Version Toggle */}
+          <div className="relative flex items-center p-0.5 rounded-full bg-[#060912] border border-white/10 shadow-inner">
             <div 
-              className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full transition-all duration-200 ease-out pointer-events-none ${
-                isVulnerable ? 'left-1' : 'left-[calc(50%+2px)]'
+              className={`absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-full transition-all duration-200 ease-out pointer-events-none ${
+                isVulnerable ? 'left-0.5' : 'left-[calc(50%+1px)]'
               } ${
-                hoveredOption === 'ver-1.0' && !isVulnerable
-                  ? 'bg-red-500/15 border border-red-500/30'
-                  : hoveredOption === 'ver-1.1' && isVulnerable
-                  ? 'bg-emerald-500/15 border border-emerald-500/30'
-                  : isVulnerable
-                  ? 'bg-red-500/20 border border-red-500/50 shadow-[0_0_12px_rgba(239,68,68,0.25)]'
-                  : 'bg-emerald-500/20 border border-emerald-500/50 shadow-[0_0_12px_rgba(16,185,129,0.25)]'
+                isVulnerable
+                  ? 'bg-red-500/20 border border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.25)]'
+                  : 'bg-emerald-500/20 border border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
               }`}
             />
 
-            {/* Option 1: v1.0 Vulnerable */}
+            {/* Option 1: Vulnerable */}
             <button
-              onClick={() => setVersion('ver-1.0')}
-              onMouseEnter={() => setHoveredOption('ver-1.0')}
-              onMouseLeave={() => setHoveredOption(null)}
-              className={`relative z-10 px-3 py-1 text-xs font-mono font-semibold transition-colors duration-150 flex items-center gap-1.5 leading-none ${
-                isVulnerable
-                  ? 'text-red-300'
-                  : 'text-slate-400 hover:text-slate-200'
+              onClick={() => setVersion(activeTargetId === 'docubot' ? 'docu-1.0' : 'ver-1.0')}
+              className={`relative z-10 px-2.5 py-1 text-[11px] font-mono font-semibold transition-colors flex items-center gap-1 leading-none ${
+                isVulnerable ? 'text-red-300' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <AlertCircle className={`w-3.5 h-3.5 shrink-0 ${isVulnerable ? 'text-red-400' : 'text-slate-500'}`} />
-              <span>v1.0 (Vulnerable)</span>
+              <AlertCircle className={`w-3 h-3 shrink-0 ${isVulnerable ? 'text-red-400' : 'text-slate-500'}`} />
+              <span>{activeTargetId === 'docubot' ? 'v1.0 (Vulnerable)' : 'v1.0 (Vulnerable)'}</span>
             </button>
 
-            {/* Option 2: v1.1 Protected */}
+            {/* Option 2: Protected */}
             <button
-              onClick={() => setVersion('ver-1.1')}
-              onMouseEnter={() => setHoveredOption('ver-1.1')}
-              onMouseLeave={() => setHoveredOption(null)}
-              className={`relative z-10 px-3 py-1 text-xs font-mono font-semibold transition-colors duration-150 flex items-center gap-1.5 leading-none ${
-                !isVulnerable
-                  ? 'text-emerald-300'
-                  : 'text-slate-400 hover:text-slate-200'
+              onClick={() => setVersion(activeTargetId === 'docubot' ? 'docu-1.1' : 'ver-1.1')}
+              className={`relative z-10 px-2.5 py-1 text-[11px] font-mono font-semibold transition-colors flex items-center gap-1 leading-none ${
+                !isVulnerable ? 'text-emerald-300' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <ShieldCheck className={`w-3.5 h-3.5 shrink-0 ${!isVulnerable ? 'text-emerald-400' : 'text-slate-500'}`} />
-              <span>v1.1 (Protected)</span>
+              <ShieldCheck className={`w-3 h-3 shrink-0 ${!isVulnerable ? 'text-emerald-400' : 'text-slate-500'}`} />
+              <span>{activeTargetId === 'docubot' ? 'v1.1 (Protected)' : 'v1.1 (Protected)'}</span>
             </button>
           </div>
         </div>
@@ -148,46 +144,37 @@ export default function TopBar({
         <div className="h-6 w-px bg-white/10 shrink-0 hidden md:block" />
 
         {/* ================================================================
-            ZONE 3: Engine Status & AI Co-Pilot (Point 1, 3, 5, 7)
-            - Consistent chip style
-            - AI Co-Pilot looks clickable with spark icon + real pulsing live dot
+            ZONE 3: Engine Status & AI Co-Pilot
             ================================================================ */}
-        <div className="flex items-center gap-3 shrink-0">
-          {/* Engine API Status Chip */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#0e1422]/90 border border-white/10 text-xs font-mono shadow-sm">
-            <span className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">ENGINE</span>
+        <div className="flex items-center gap-2.5 shrink-0">
+          {/* Engine Status */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#0e1422]/90 border border-white/10 text-xs font-mono shadow-sm">
+            <span className="text-[9.5px] uppercase text-slate-400 font-bold tracking-wider">ENGINE</span>
             {isOnline ? (
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-400">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 duration-1000"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
+              <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                 <span>LIVE :8000</span>
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
-                <span className="w-2 h-2 rounded-full bg-slate-600"></span>
+              <span className="inline-flex items-center gap-1 text-[10.5px] text-slate-400 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
                 <span>OFFLINE (SEED)</span>
               </span>
             )}
           </div>
 
-          {/* AI Co-Pilot Clickable Chip with Spark icon and live pulsing indicator */}
+          {/* AI Co-Pilot Toggle */}
           <button
             onClick={onToggleCoPilot}
-            className={`group inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-mono font-medium transition-all shadow-sm cursor-pointer ${
+            className={`group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-mono font-medium transition-all shadow-sm cursor-pointer ${
               isCoPilotOpen
-                ? 'bg-blue-600/20 text-blue-300 border-blue-500/50 ring-1 ring-blue-500/30 shadow-[0_0_12px_rgba(59,130,246,0.25)]'
-                : 'bg-[#0e1422]/90 hover:bg-white/[0.06] hover:border-blue-500/30 text-slate-200 border-white/10'
+                ? 'bg-blue-600/20 text-blue-300 border-blue-500/50 ring-1 ring-blue-500/30'
+                : 'bg-[#0e1422]/90 hover:bg-white/[0.06] text-slate-200 border-white/10'
             }`}
-            title="Toggle Red-Team AI Guardian Co-Pilot Drawer (Active across all tabs)"
+            title="Toggle Red-Team AI Guardian Co-Pilot"
           >
-            <Sparkles className={`w-3.5 h-3.5 shrink-0 transition-all ${isCoPilotOpen ? 'text-blue-400 scale-105' : 'text-slate-400 group-hover:text-blue-400'}`} />
-            <span>AI Co-Pilot</span>
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 duration-1000"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
+            <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+            <span>Co-Pilot</span>
           </button>
         </div>
 
@@ -195,30 +182,30 @@ export default function TopBar({
         <div className="h-6 w-px bg-white/10 shrink-0 hidden lg:block" />
 
         {/* ================================================================
-            ZONE 4: Actions (Point 1, 3, 7, 8, 9)
-            - Export button: consistent secondary chip style
-            - Run Demo CTA: High contrast, elevated shadow/glow, clear dominance
+            ZONE 4: Actions & Guided 5-Minute Judge Demo Tour
             ================================================================ */}
-        <div className="flex items-center gap-3 shrink-0">
-          {/* Export Config */}
+        <div className="flex items-center gap-2 shrink-0 ml-auto">
+          {/* Export Executive Security Audit Report */}
           <button
-            onClick={onExport}
-            className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#0e1422]/90 hover:bg-white/[0.06] border border-white/10 hover:border-white/20 text-xs font-mono text-slate-300 hover:text-white transition-all shadow-sm cursor-pointer leading-none"
-            title="Export full agent security configuration"
+            onClick={onExportAuditReport || onExport}
+            className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#0e1422]/90 hover:bg-white/[0.06] border border-white/10 text-xs font-mono text-slate-300 hover:text-white transition-all shadow-sm whitespace-nowrap"
+            title="Export full executive security audit report for hackathon judges"
           >
-            <Download className="w-3.5 h-3.5 shrink-0 text-slate-400 group-hover:text-blue-400 transition-colors" />
-            <span>Export</span>
+            <Download className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-400 transition-colors" />
+            <span className="hidden md:inline">Audit Report</span>
           </button>
 
-          {/* Primary CTA: Run Demo with subtle glow, elevated contrast */}
+          {/* Guided Red Team Playbook */}
           <button
-            onClick={onRunDemo}
-            className="group inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-xs font-mono font-bold text-white border border-blue-400/60 shadow-[0_0_16px_rgba(37,99,235,0.45)] hover:shadow-[0_0_22px_rgba(37,99,235,0.65)] hover:border-blue-300 transition-all cursor-pointer leading-none"
-            title="Trigger sandboxed execution trace for Attack A-001"
+            onClick={onStartTour}
+            className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-gradient-to-r from-amber-500/20 to-blue-600/30 hover:from-amber-500/30 hover:to-blue-600/40 border border-amber-400/40 text-xs font-mono font-bold text-amber-200 shadow-[0_0_14px_rgba(245,158,11,0.2)] transition-all cursor-pointer leading-none whitespace-nowrap"
+            title="Open Red Team Playbook — guided attack scenario walkthrough"
           >
-            <Zap className="w-3.5 h-3.5 shrink-0 text-blue-100 group-hover:text-yellow-300 transition-colors fill-blue-100/20" />
-            <span>Run Demo (A-001)</span>
+            <BookOpen className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+            <span>Red Team Playbook</span>
           </button>
+
+
         </div>
 
       </div>
