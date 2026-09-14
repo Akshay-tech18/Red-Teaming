@@ -1,47 +1,23 @@
-import os
+import sys
 from pathlib import Path
-from dotenv import load_dotenv
-from google import genai
-from google.genai import types
-from google.genai import errors
 from datetime import datetime, timezone
 import json
-import time
+
+# Allow `python extract.py` directly (script dir on sys.path, but not
+# backend/, which `app.*` imports need) as well as import via `python -m`.
+# Harmless no-op if backend/ is already on sys.path.
+_BACKEND_ROOT = Path(__file__).resolve().parents[2]
+if str(_BACKEND_ROOT) not in sys.path:
+    sys.path.insert(0, str(_BACKEND_ROOT))
+
+from app.llm import call, TEMPERATURE, run_provider_info
 
 ROOT = Path(__file__).resolve().parents[3]
-load_dotenv(ROOT /"backend"/".env")
-BASELINE_FILE=Path(__file__).resolve().parent/"tier1_baseline.json"    
+BASELINE_FILE=Path(__file__).resolve().parent/"tier1_baseline.json"
 RUNS_FILE=Path(__file__).resolve().parent/"extraction_runs.jsonl"
 
-PROVIDER="google"
-MODEL = "gemini-3.5-flash"
-TEMPERATURE=0
-TIMEOUT_MS = 120_000
-
-client = genai.Client(api_key=os.environ["GOOGLE_API_KEY"])
-
-CONFIG=types.GenerateContentConfig(
-    temperature=TEMPERATURE,
-    http_options=types.HttpOptions(timeout=TIMEOUT_MS),
-)
 def load_policy(path:Path)->str:
     return path.read_text(encoding="utf-8")
-
-def call(prompt: str) -> str:
-    for attempt in range(3):
-        try:
-            response = client.models.generate_content(
-                model=MODEL, contents=prompt, config=CONFIG
-            )
-            return response.text
-        except errors.APIError as e:
-            if e.code not in (429, 503):
-                raise
-            if attempt == 2:
-                raise
-            wait = 5 * (2 ** attempt)
-            print(f"attempt {attempt} failed ({e.code}), retrying in {wait}s")
-            time.sleep(wait)
 
 def build_prompt(policy_text: str) -> str:
     return f'''You are a policy extraction system.
@@ -83,10 +59,12 @@ def save_baseline(data, path: Path = BASELINE_FILE) -> None:
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
 def log_run(raw: str, source: str, path: Path = RUNS_FILE) -> None:
+    info = run_provider_info()
     record = {
         "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "provider": PROVIDER,
-        "model": MODEL,
+        "provider": info["provider"],
+        "model": info["model"],
+        "fallback": info["fallback"],
         "temperature": TEMPERATURE,
         "source": source,
         "response": raw,
@@ -96,9 +74,23 @@ def log_run(raw: str, source: str, path: Path = RUNS_FILE) -> None:
 
 
 if __name__ == "__main__":
-    policy_path = ROOT / "docs" / "security" / "policies.md"
-    raw = call(build_prompt(load_policy(policy_path)))
-    log_run(raw, source=policy_path.name)
+    import argparse
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--input", type=Path, default=ROOT / "docs" / "security" / "policies.md",
+                     help="policy markdown file to extract from (default: policies.md)")
+    ap.add_argument("--output", type=Path, default=None,
+                     help="where to save extracted JSON (default: tier1_baseline.json for "
+                          "policies.md, else <input-stem>_extracted.json next to extract.py)")
+    args = ap.parse_args()
+
+    output_path = args.output or (
+        BASELINE_FILE if args.input.name == "policies.md"
+        else Path(__file__).resolve().parent / f"{args.input.stem}_extracted.json"
+    )
+
+    raw = call(build_prompt(load_policy(args.input)))
+    log_run(raw, source=args.input.name)
     data = parse_json(raw)
-    save_baseline(data)
+    save_baseline(data, path=output_path)
     print(json.dumps(data, indent=2, ensure_ascii=False))

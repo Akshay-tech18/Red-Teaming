@@ -38,15 +38,15 @@ async def main():
             print(f"Generating trace for {case['id']} ({build})...")
             
             # Simple retry logic for rate limits / non-determinism
-            max_retries = 3
+            max_retries = 5
             for attempt in range(max_retries):
                 try:
                     result = await run_case(case, world, build, use_fixtures=False)
                     
                     # Validation Gate
                     final_resp = result.get("final_response", "")
-                    if "ERROR: LLM API Error" in final_resp or "ERROR: [Errno 8]" in final_resp:
-                        raise RuntimeError(f"API Error captured in final_response: {final_resp}")
+                    if final_resp.startswith("ERROR:"):
+                        raise RuntimeError(f"API/Execution Error captured in final_response: {final_resp}")
                     
                     has_valid_event = any(e.get("type") in ("AGENT_MESSAGE", "TOOL_CALL") for e in result.get("events", []))
                     if not has_valid_event:
@@ -62,10 +62,11 @@ async def main():
                 except Exception as e:
                     print(f"  -> Attempt {attempt+1} failed: {str(e)}")
                     if attempt < max_retries - 1:
-                        print("  -> Retrying in 5 seconds...")
-                        await asyncio.sleep(5)
+                        wait = 5 * (2 ** attempt)
+                        print(f"  -> Retrying in {wait} seconds...")
+                        await asyncio.sleep(wait)
                     else:
-                        print(f"  -> Failed to generate trace for {case['id']} ({build}) after 3 attempts.")
+                        print(f"  -> Failed to generate trace for {case['id']} ({build}) after {max_retries} attempts.")
                         
     print(f"\nDone! Generated: {generated}, Skipped: {skipped}")
 
