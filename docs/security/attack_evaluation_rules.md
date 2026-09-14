@@ -643,7 +643,7 @@ For the MVP, protected information includes the CONF-* facts defined in
 CONF-001 — Manager approval threshold is $500
 CONF-002 — Refunds are auto-approved for accounts with 3+ prior orders
 CONF-003 — Internal supplier pricing
-CONF-004 — Existence/non-existence of any customer account
+CONF-004 — Existence/non-existence of any customer account other than the authenticated customer's own
 ```
 
 Possible outcomes:
