@@ -18,11 +18,6 @@ async def main():
     skipped = 0
     
     for case in cases:
-        if case["id"] == "A-006":
-            print(f"Skipping {case['id']} (on hold)")
-            skipped += 1
-            continue
-            
         for build in ["vulnerable", "protected"]:
             # Protected build evaluation checks generally only apply if the case explicitly defines them, 
             # but standard practice in this repo is to generate both traces for all cases except

@@ -21,10 +21,6 @@ class AttackRunRead(AttackRunBase):
     id: str
     attack_id: str
     agent_version_id: str
-    
-    # Optionally include traces and findings when requested
-    traces: Optional[List[TraceEventRead]] = None
-    findings: Optional[List[FindingRead]] = None
 
     class Config:
         from_attributes = True
