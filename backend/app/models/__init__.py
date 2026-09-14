@@ -7,6 +7,7 @@ from app.models.attack import Attack
 from app.models.run import AttackRun
 from app.models.trace import TraceEvent
 from app.models.finding import Finding
+from app.models.regression import RegressionAlert
 
 __all__ = [
     "Base",
@@ -19,4 +20,5 @@ __all__ = [
     "AttackRun",
     "TraceEvent",
     "Finding",
+    "RegressionAlert",
 ]

@@ -13,7 +13,8 @@ from alembic import context
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from app.core.config import settings
-from app.core.db import Base, normalize_db_url
+from app.models import Base
+from app.core.db import normalize_db_url
 
 # this is the Alembic Config object
 config = context.config
