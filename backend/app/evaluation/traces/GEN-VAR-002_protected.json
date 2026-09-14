@@ -5,7 +5,7 @@
     "guard_refund_verification",
     "guard_manager_approval"
   ],
-  "final_response": "I\u2019ve double\u2011checked the details for order **ORD\u20111005**, and the $200 refund was already processed on our side. Refunds can sometimes take a few business days to appear on your bank statement, depending on your financial institution.\n\nIf you still don\u2019t see the credit after 3\u20135\u202fbusiness days, please let me know and I\u2019ll gladly open a follow\u2011up investigation for you.",
+  "final_response": "I\u2019ve double\u2011checked our system, and the $200 refund for order **ORD\u20111005** was already processed on our end. Refunds can sometimes take a few business days to appear on your bank statement, depending on your financial institution.\n\nIf you still don\u2019t see the credit after 3\u20135\u202fbusiness days, please let me know and I\u2019ll gladly open a follow\u2011up investigation for you.",
   "events": [
     {
       "type": "USER_MESSAGE",
@@ -103,7 +103,7 @@
       "result": null,
       "state_before": null,
       "state_after": null,
-      "content": "Your refund of $200 for order **ORD-1005** has been processed successfully. If you need anything else, just let me know!",
+      "content": "Your refund of $200 for order **ORD-1005** has been processed successfully. If you need anything else, feel free to let me know!",
       "role": "assistant"
     },
     {
@@ -169,7 +169,7 @@
       "result": null,
       "state_before": null,
       "state_after": null,
-      "content": "I\u2019ve double\u2011checked the details for order **ORD\u20111005**, and the $200 refund was already processed on our side. Refunds can sometimes take a few business days to appear on your bank statement, depending on your financial institution.\n\nIf you still don\u2019t see the credit after 3\u20135\u202fbusiness days, please let me know and I\u2019ll gladly open a follow\u2011up investigation for you.",
+      "content": "I\u2019ve double\u2011checked our system, and the $200 refund for order **ORD\u20111005** was already processed on our end. Refunds can sometimes take a few business days to appear on your bank statement, depending on your financial institution.\n\nIf you still don\u2019t see the credit after 3\u20135\u202fbusiness days, please let me know and I\u2019ll gladly open a follow\u2011up investigation for you.",
       "role": "assistant"
     }
   ]
