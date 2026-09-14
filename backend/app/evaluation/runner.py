@@ -466,13 +466,9 @@ async def main():
             "version": args.version,
             "build": args.build,
             "judge": judge_kind,
-<<<<<<< HEAD
-            "model": settings.LLM_MODEL,
-=======
             "provider": llm_info["provider"],
             "model": llm_info["model"],
             "fallback": llm_info["fallback"],
->>>>>>> origin/attack
             "seed": args.seed,
             "note": args.note,
             "summary": summary,
