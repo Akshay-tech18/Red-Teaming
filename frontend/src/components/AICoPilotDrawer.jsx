@@ -40,6 +40,21 @@ export default function AICoPilotDrawer({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Listen for external trigger to open and pre-fill prompt
+  useEffect(() => {
+    const handleOpenCopilot = (e) => {
+      if (e.detail?.prompt) {
+        setInputPrompt(e.detail.prompt);
+        // We cannot directly call handleSendMessage since it takes an event,
+        // but since we updated inputPrompt, the user just hits Send.
+      }
+    };
+    window.addEventListener('open-copilot', handleOpenCopilot);
+    return () => window.removeEventListener('open-copilot', handleOpenCopilot);
+  }, []);
+
   // Tab-specific contextual suggestions
   const getContextSuggestions = () => {
     switch (currentView) {
@@ -89,7 +104,7 @@ export default function AICoPilotDrawer({
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    if (!inputPrompt.trim()) return;
+    if (!inputPrompt.trim() || isLoading) return;
 
     const userMsg = {
       id: `msg-${Date.now()}`,
@@ -101,6 +116,7 @@ export default function AICoPilotDrawer({
     setMessages((prev) => [...prev, userMsg]);
     const query = inputPrompt;
     setInputPrompt('');
+    setIsLoading(true);
 
     // Context-aware intelligent response
     const fetchReply = async () => {
@@ -135,6 +151,8 @@ export default function AICoPilotDrawer({
           text: "Sorry, I couldn't connect to the backend LLM service."
         };
         setMessages((prev) => [...prev, errorReply]);
+      } finally {
+        setIsLoading(false);
       }
     };
     
@@ -201,6 +219,22 @@ export default function AICoPilotDrawer({
             </div>
           );
         })}
+        
+        {isLoading && (
+          <div className="flex flex-col items-start">
+            <div className="flex items-center gap-1.5 mb-1 text-[9.5px] text-slate-500">
+              <span>CO-PILOT</span>
+            </div>
+            <div className="p-3 rounded-sm bg-[#080d16] text-slate-400 border border-slate-800 font-sans text-xs flex items-center gap-2">
+              <span className="flex gap-0.5">
+                <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce"></span>
+                <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></span>
+                <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></span>
+              </span>
+              Thinking...
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -232,12 +266,14 @@ export default function AICoPilotDrawer({
           type="text"
           value={inputPrompt}
           onChange={(e) => setInputPrompt(e.target.value)}
-          placeholder={`Ask Co-Pilot about ${currentView}...`}
-          className="flex-1 bg-[#060a10] border border-slate-800 rounded-sm px-3 py-2 text-xs font-mono text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all"
+          disabled={isLoading}
+          placeholder={isLoading ? "Co-Pilot is thinking..." : `Ask Co-Pilot about ${currentView}...`}
+          className="flex-1 bg-[#060a10] border border-slate-800 rounded-sm px-3 py-2 text-xs font-mono text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all disabled:opacity-50"
         />
         <button
           type="submit"
-          className="px-3 py-2 rounded-sm bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-sm flex items-center justify-center shrink-0"
+          disabled={isLoading}
+          className="px-3 py-2 rounded-sm bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-sm flex items-center justify-center shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
           title="Send to Co-Pilot"
         >
           <Send className="w-3.5 h-3.5" />

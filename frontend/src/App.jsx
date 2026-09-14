@@ -33,6 +33,12 @@ export default function App() {
   const [logoPhase, setLogoPhase] = useState('splash');
   const [introKey, setIntroKey] = useState(0);
 
+  useEffect(() => {
+    const handleOpenCopilot = () => setIsCoPilotOpen(true);
+    window.addEventListener('open-copilot', handleOpenCopilot);
+    return () => window.removeEventListener('open-copilot', handleOpenCopilot);
+  }, []);
+
   const handleReplayIntro = () => {
     setLogoPhase('splash');
     setIntroKey((k) => k + 1);

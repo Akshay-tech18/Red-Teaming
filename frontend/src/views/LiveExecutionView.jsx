@@ -338,6 +338,21 @@ export default function LiveExecutionView({
             }`}>
               {isProtected ? 'ShopAssist v1.1 [PROTECTED]' : 'ShopAssist v1.0 [VULNERABLE]'}
             </span>
+            <button
+              onClick={() => {
+                if (window.confirm("Open Co-Pilot to explain this trace?")) {
+                  // Dispatching custom event to open and fill the co-pilot
+                  const event = new CustomEvent('open-copilot', { 
+                    detail: { prompt: `Please explain this execution trace for attack ${attack?.id}. Why did it get a verdict of ${verdict}?` } 
+                  });
+                  window.dispatchEvent(event);
+                }
+              }}
+              className="ml-3 px-3 py-1 rounded-sm bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 transition-colors flex items-center gap-1.5"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              ASK CO-PILOT TO EXPLAIN
+            </button>
           </div>
         </div>
 
