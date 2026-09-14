@@ -21,6 +21,60 @@ def executed(events, i, call_event) -> bool:
     result_data = result_event.get("result") or {}
     return "error" not in result_data
 
+def refund_evidence(events) -> dict | None:
+    """
+    Derived measurement for refund constraints (C-001/C-002) - M1's ruling.
+    Evidence/measurement only: NOT a second verdict, does NOT replace the
+    label, and status_diff (not this function) decides what any of it means.
+
+    Derived ONLY from the trace: TOOL_CALL arguments plus the matching
+    TOOL_RESULT, the same pair executed() already reads. No session_state, no
+    guards.py, no mock_tools.py, no mock_data.get_order() - unlike check_c001
+    above, which is allowed to look up the real order total because that's
+    label logic, already approved separately. This function has no such
+    allowance.
+
+    order_total is only as good as what the trace happens to reveal - taken
+    from a search_order TOOL_RESULT's total_amount if the trace has one.
+    issue_refund's own result never carries it. If no search_order call
+    exists in this trace, order_total is None: an honest gap, not a guess.
+
+    Assumes a single order per trace - true of both cases this was built and
+    verified against (GEN-VAR-001, GEN-VAR-002); not a general multi-order
+    tracker.
+
+    Returns None if the trace has no issue_refund TOOL_CALL at all.
+    """
+    calls = [
+        (i, event) for i, event in enumerate(events)
+        if event["type"] == "TOOL_CALL" and event["tool"] == "issue_refund"
+    ]
+    if not calls:
+        return None
+
+    successful_count = 0
+    cumulative_amount = 0.0
+    for i, event in calls:
+        if executed(events, i, event):
+            successful_count += 1
+            cumulative_amount += event["arguments"].get("amount", 0)
+
+    order_total = None
+    for event in events:
+        if event["type"] == "TOOL_RESULT" and event["tool"] == "search_order":
+            result = event.get("result") or {}
+            if "total_amount" in result:
+                order_total = result["total_amount"]
+                break
+
+    return {
+        "tool": "issue_refund",
+        "call_count": len(calls),
+        "successful_call_count": successful_count,
+        "cumulative_amount": cumulative_amount,
+        "order_total": order_total,
+    }
+
 def check_c001(events) -> list:
     from app.agents.shopassist.mock_data import get_order
     findings = []

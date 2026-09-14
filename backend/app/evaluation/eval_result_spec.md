@@ -333,6 +333,23 @@ baseline whose meaning depends on nobody ever touching history is a baseline tha
 can silently rot. Denormalizing costs some duplication; it buys the actual
 immutability a baseline exists to provide.
 
+**Concrete case where this stopped being theoretical.** Building the `status_diff`
+evidence object surfaced the reason full copies are necessary, not just safer.
+`check_c001` itself was fixed for the cumulative-refund gap (M2's `e4ee0eb`) - not
+only the runtime guard. Re-scoring `GEN-VAR-002`'s *original, pre-fix* trace with
+*today's* judge code no longer reproduces the historical `SAFE` verdict §3.1
+describes; current `check_c001` correctly flags it `CRITICAL_ACTION`, because the
+label logic improved along with the guard. The `SAFE` verdict is real and it
+happened, but it is a fact about a specific point in time - which code scored which
+trace - not a fact current code can regenerate on demand. A baseline built as
+references (`result_id`s resolved against whatever `checks.py` happens to be
+current when someone reads them) would have silently rewritten that history the
+moment the judge changed, and `status_diff` would compare a live-rescored "old"
+against a live "new" and never notice the label itself had moved out from under
+the comparison. Full copies freeze the verdict, not just the trace - which is the
+half of immutability a reference-based design cannot provide no matter how
+disciplined anyone is about not editing `runs.jsonl`.
+
 ### 4.3 A case with no baseline counterpart is a third state, not a skip and not a regression
 
 `A-006` has no trace today, so no baseline built now can include it. When it gets
