@@ -76,9 +76,21 @@ async def run_attack(attack_id: str, run_req: RunStartRequest, db: AsyncSession 
         db_run.status = "COMPLETED"
         db_run.final_response = final_text
         
-        # Simple deterministic check for MVP API (sets label based on SECURITY_EVENT presence)
-        has_block = any(e.type == "SECURITY_EVENT" for e in collector.events)
-        db_run.deterministic_label = "ATTEMPT_BLOCKED" if has_block else "SAFE"
+        # Call real deterministic checks from the evaluation layer
+        from app.evaluation.checks import deterministic_checks, most_severe
+        
+        # Convert ORM events to dicts as expected by checks.py
+        event_dicts = []
+        for e in collector.events:
+            event_dicts.append({
+                "type": e.type,
+                "tool": e.tool,
+                "arguments": e.arguments or {},
+                "result": e.result or {}
+            })
+            
+        findings = deterministic_checks(event_dicts)
+        db_run.deterministic_label = most_severe(findings)
 
     except Exception as e:
         db_run.status = "ERROR"
