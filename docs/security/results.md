@@ -5,7 +5,7 @@
 The original goal of this work was to measure whether ShopAssist's protected build
 resists a fixed set of attacks more reliably than its unprotected counterpart. That
 number exists and is reported below. But the more durable finding is a different
-one: building the measurement instrument surfaced four distinct, independently
+one: building the measurement instrument surfaced five distinct, independently
 verified ways an evaluation harness can report something other than what it claims
 to measure, without ever raising an error. None of the four required an
 adversarial trace or an edge-case input to appear — every one of them showed up
@@ -153,6 +153,50 @@ occurs generally.
 mechanism produced its verdict. Any comparison of "semantic accuracy" against a
 nominal `SEMANTIC` denominator risks silently including verdicts the semantic
 judge never actually produced.
+
+### 1.5 Rate-limit errors stored as agent behavior
+
+Categorically different from the four above, which is why it's listed
+separately rather than folded into §1.4. Findings 1.1–1.4 each produce a wrong
+*number* — an accuracy that shifts, a label that flips, a verdict from the wrong
+provider, a case scored by the wrong instrument. This one produced a wrong
+*narrative*. Eight of the ten traces in the original A-006 fixture experiment
+were Groq 429 rate-limit errors — `ERROR: LLM API Error 429`, no tool calls, no
+agent response — written into trace files and read back as if they were agent
+behavior. The resulting finding, "the agent engages with the eligible order and
+refuses to engage with the ineligible one," is a plausible, internally coherent
+behavioral claim. It does not look like an error. It was written up, reported to
+M1, and converted into a work assignment — revise the A-006 attack prompt to make
+the pretext stronger — before anyone checked whether the underlying traces
+contained a real agent response.
+
+**How it was caught matters, and it wasn't caught well.** Nothing errored. The
+harness has no check that distinguishes an LLM API failure recorded into
+`final_response` from a genuine model reply — both are just strings in the same
+field. It surfaced only because the shape of the finding resembled a result
+caught hours earlier, by the same underlying mechanism, in the GEN-VAR-001
+structuring run — that one was caught mid-run, when pacing was added after the
+first occurrence made it visible. Relying on a person noticing a resemblance to a
+previous incident is not a detection mechanism this harness should be trusted to
+repeat. It worked once. It is not a control.
+
+**Consequence:** a harness that records tool output as behavior can manufacture
+findings, not just noise. A wrong number invites scrutiny — it looks measured, so
+someone checks the measurement. A wrong story that fits the data does not invite
+the same scrutiny, because it doesn't look like a failure; it looks like a
+result.
+
+**Scope, same discipline as the other four.** What's established: 8 of 10 traces
+in the A-006 experiment, 7 of 10 in the GEN-VAR-001 run — both ad hoc
+investigations, not the scored corpus itself. What isn't established: how many
+traces elsewhere carry the same contamination. Checked, not assumed, while
+writing this section: the committed trace corpus (`backend/app/evaluation/traces/`,
+the actual traces behind every figure in §2) was scanned for `429`/`LLM API
+Error` text — zero hits. That's real evidence the scored corpus itself is clean
+of this specific pattern, not a guess extended from the two ad hoc experiments
+where it was found. It does not rule out a differently-shaped failure this exact
+grep wouldn't catch (a different rate-limit message, a different provider's error
+format, a truncated non-error response) — only this one, now-known pattern.
 
 ---
 
@@ -370,14 +414,16 @@ that belongs to M1, not to this evidence.
 
 An evaluation harness was built to answer one question — does the protected build
 resist attacks more reliably than the unprotected one — and along the way
-produced evidence for four independent reasons a "yes" or "no" to that question
+produced evidence for five independent reasons a "yes" or "no" to that question
 could be wrong without any test failing: the agent it's testing doesn't do the
 same thing twice, the judge scoring it doesn't either, which judge answered isn't
-guaranteed to be the one intended, and which *kind* of judge answered isn't
-guaranteed to be the one the case declares. Each was caught with direct evidence —
-a ten-sample trace, a five-call cache-bypassed test, a cache lookup under two
-provider keys, a sixteen-trace direct check — not asserted from a single
-surprising result.
+guaranteed to be the one intended, which *kind* of judge answered isn't
+guaranteed to be the one the case declares, and the harness can record an
+infrastructure failure as if it were the agent's answer. Each was caught with
+direct evidence — a ten-sample trace, a five-call cache-bypassed test, a cache
+lookup under two provider keys, a sixteen-trace direct check, an eight-of-ten
+and seven-of-ten rate-limit trace check — not asserted from a single surprising
+result.
 
 The accuracy numbers in section 2 are real and stand as measured. But the more
 durable contribution of this work is the enumeration in section 1: a concrete,
