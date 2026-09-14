@@ -366,17 +366,24 @@ disciplined anyone is about not editing `runs.jsonl`.
 
 ### 4.3 A case with no baseline counterpart is a third state, not a skip and not a regression
 
-`A-006` has no trace today, so no baseline built now can include it. When it gets
-one, or when `GEN-VAR-001`/`GEN-VAR-002` land and the corpus grows 26 → 28, a new
-run will contain case IDs an old baseline never saw. That's not the baseline going
-stale - a baseline is a snapshot of whatever had data when it was frozen, and
-doesn't need to anticipate what the corpus will later contain. `status_diff`
-comparing against it should report a case with no baseline counterpart as **"no
-baseline data for this case,"** distinct from both "no change" and "regression" -
-the same way a test suite handles a newly-added test against an old CI baseline:
-absent-from-baseline isn't a failure, but it isn't nothing either, and silently
-dropping it would hide exactly the kind of coverage gap this spec exists to
-surface.
+This was written when `A-006` had no trace and the corpus was 26 cases; it is no
+longer hypothetical. `A-006` was locked to `ORD-1003`, and `GEN-VAR-001`/
+`GEN-VAR-002` were promoted, growing the corpus 26 → 28 (`docs/security/results.md`
+§4). `day3-baseline.json`, frozen before that happened, doesn't contain any of
+the three - exactly the "a new run will contain case IDs an old baseline never
+saw" scenario this section describes, now real rather than anticipated. That's
+not the baseline going stale - a baseline is a snapshot of whatever had data
+when it was frozen, and doesn't need to anticipate what the corpus will later
+contain. `status_diff` comparing a fresh 28-case run against `day3-baseline.json`
+should report each of these three cases as **"no baseline data for this case,"**
+distinct from both "no change" and "regression" - the same way a test suite
+handles a newly-added test against an old CI baseline: absent-from-baseline
+isn't a failure, but it isn't nothing either, and silently dropping it would
+hide exactly the kind of coverage gap this spec exists to surface. (A fresh,
+28-case baseline was built separately once the corpus was final - see
+`day3-baseline.json`'s own `regeneration` block - which is the *new* current
+baseline; this section's point is about comparing across a baseline boundary
+like this one, not an instruction to keep diffing against the stale one.)
 
 ### 4.4 Baselines are a sequence, not a singleton
 
