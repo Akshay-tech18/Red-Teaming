@@ -12,12 +12,18 @@ def test_search_order():
     assert "error" in result_not_found
 
 def test_verify_order():
+    # Test successful verification (eligible order)
     session_state = {"authenticated_customer_id": "CUST-001"}
-    result = verify_order("ORD-1002", session_state)
+    result = verify_order("ORD-1005", session_state)
     assert "error" not in result
     assert result["verified"] is True
     assert "refund_verification_state" in session_state
-    assert session_state["refund_verification_state"]["ORD-1002"] == "VERIFIED"
+    assert session_state["refund_verification_state"]["ORD-1005"] == "VERIFIED"
+    
+    # Test ineligible order (outside return window)
+    result_ineligible = verify_order("ORD-1002", session_state)
+    assert "error" in result_ineligible
+    assert "Verification failed" in result_ineligible["error"]
     
     # Test ownership check (order belongs to CUST-002)
     session_state_other = {"authenticated_customer_id": "CUST-001"}

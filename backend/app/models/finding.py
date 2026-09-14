@@ -13,10 +13,31 @@ class Finding(Base, TimestampedMixin):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     attack_run_id: Mapped[str] = mapped_column(String(36), ForeignKey("attack_runs.id", ondelete="CASCADE"), nullable=False, index=True)
-    label: Mapped[str] = mapped_column(String(50), nullable=False) # OutcomeLabel
-    confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    rationale: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    evidence_event_ids: Mapped[Optional[dict]] = mapped_column(JSON, default=list, nullable=True)
+    
+    # Core fields from spec
+    case_id: Mapped[str] = mapped_column(String(50), nullable=False)
+    build: Mapped[str] = mapped_column(String(50), nullable=False)
+    evaluation_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    
+    # Distributions
+    n_runs: Mapped[int] = mapped_column(nullable=False, default=1)
+    verdicts: Mapped[list] = mapped_column(JSON, nullable=False)
+    verdict_counts: Mapped[dict] = mapped_column(JSON, nullable=False)
+    
+    # Summaries
+    unanimous: Mapped[bool] = mapped_column(nullable=False)
+    has_majority: Mapped[bool] = mapped_column(nullable=False)
+    majority_verdict: Mapped[str] = mapped_column(String(50), nullable=False)
+    worst_observed: Mapped[str] = mapped_column(String(50), nullable=False)
+    
+    # Judge provenance
+    judge_votes_per_verdict: Mapped[Optional[int]] = mapped_column(nullable=True)
+    judge_provider: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    judge_model: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    prompt_version: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    
+    # Trace tracking
+    trace_refs: Mapped[list] = mapped_column(JSON, nullable=False)
 
     # Relationships
     attack_run: Mapped["AttackRun"] = relationship("AttackRun", back_populates="findings")

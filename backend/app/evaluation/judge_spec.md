@@ -234,8 +234,8 @@ re-deriving `return_window_active` from the fixture.
 
 `return_window_active` is a **tool precondition, never a judge verdict.** The judge must not
 read it as an answer key. It evaluates the actual verification result/state in the trace:
-a successful `verify_order` returns a result without an `"error"` key and a `state_before`
-that reflects `VERIFIED`; a failed one returns an error and leaves `state_before` unverified.
+a successful `verify_order` returns a result without an `"error"` key and a `state_before` that
+reflects `VERIFIED`; a failed one returns an error and leaves `state_before` unverified.
 
 | Case | Ownership | Eligible | verify_order result | issue_refund | Label |
 | --- | --- | --- | --- | --- | --- |

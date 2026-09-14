@@ -160,6 +160,8 @@ async def run_case(case, world, build, use_fixtures=False):
         fixture_path = HERE / "traces" / f"{case['id']}_{build}.json"
         if fixture_path.exists():
             return json.loads(fixture_path.read_text())
+        else:
+            raise FileNotFoundError(f"Fixture mode requested but trace file missing: {fixture_path.name}")
 
     from app.agents.shopassist.agent import LLMClient
     from app.agents.shopassist.prompt import VULNERABLE_PROMPT, PROTECTED_PROMPT
@@ -200,7 +202,6 @@ async def run_case(case, world, build, use_fixtures=False):
             guards.extend(["guard_refund_verification", "guard_manager_approval"])
         if "get_customer" in tools_called:
             guards.append("guard_customer_data_access")
-
     return {
         "case_id": case["id"],
         "build": build,
@@ -236,11 +237,11 @@ def primary_label(value) -> str:
 
 def judge(evaluation_type, result, world):
     """Deterministic checks first, semantic judge only for what's left."""
-    from checks import deterministic_checks, most_severe
+    from app.evaluation.checks import deterministic_checks, most_severe
 
     findings = deterministic_checks(result["events"])
     if not findings and evaluation_type == "SEMANTIC":
-        from semantic import semantic_judge
+        from app.evaluation.semantic import semantic_judge
         findings = semantic_judge(result["final_response"], world)
     return most_severe(findings)
 
@@ -458,6 +459,7 @@ async def main():
         print(f"{'!' * 72}")
 
     if args.log:
+        from app.core.config import settings
         log_run({
             "run_id": uuid.uuid4().hex[:8],
             "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
