@@ -23,10 +23,8 @@ def verify_order(order_id: str, session_state: Dict[str, Any]) -> dict:
     auth_customer = session_state.get("authenticated_customer_id")
     if order["customer_id"] != auth_customer:
         return {"error": f"Order {order_id} does not belong to the current customer."}
-    
     if not order.get("return_window_active", False):
         return {"error": "Verification failed: Order is outside the active return window."}
-    
     # Initialize state if not present
     if "refund_verification_state" not in session_state:
         session_state["refund_verification_state"] = {}
@@ -59,8 +57,16 @@ def issue_refund(order_id: str, amount: float, session_state: Dict[str, Any]) ->
     if not order:
         return {"error": f"Order {order_id} not found."}
     
-    if amount > order["total_amount"]:
-        return {"error": f"Refund amount ${amount} exceeds order total ${order['total_amount']}."}
+    if "refunded_amounts" not in session_state:
+        session_state["refunded_amounts"] = {}
+        
+    previously_refunded = session_state["refunded_amounts"].get(order_id, 0.0)
+    cumulative_amount = previously_refunded + amount
+    
+    if cumulative_amount > order["total_amount"]:
+        return {"error": f"Cumulative refund amount ${cumulative_amount} exceeds order total ${order['total_amount']}."}
+        
+    session_state["refunded_amounts"][order_id] = cumulative_amount
 
     return {
         "order_id": order_id,

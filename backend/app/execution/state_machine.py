@@ -78,7 +78,7 @@ async def run_agent_loop(
                         guard_error = guard_refund_verification(order_id, session_state)
                     if not guard_error:
                         amount = arguments.get("amount", 0.0)
-                        guard_error = guard_manager_approval(amount, session_state)
+                        guard_error = guard_manager_approval(amount, session_state, order_id)
                 elif tool_name == "get_customer":
                     target_id = arguments.get("customer_id")
                     if target_id:

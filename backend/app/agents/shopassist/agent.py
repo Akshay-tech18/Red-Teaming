@@ -11,14 +11,14 @@ class LLMClient:
         self.gemini_api_key = settings.GEMINI_API_KEY
         
         # Determine provider based on model name
-        if self.model.startswith("llama") or self.model.startswith("mixtral") or self.model.startswith("gemma"):
+        if (self.model.startswith("llama") or self.model.startswith("mixtral")
+                or self.model.startswith("gemma") or self.model.startswith("openai/gpt-oss")):
             self.provider = "groq"
             self.base_url = "https://api.groq.com/openai/v1/chat/completions"
             self.api_key = self.groq_api_key
         else:
             self.provider = "gemini"
-            # NOTE: Gemini also supports OpenAI compatible endpoints natively now,
-            # but since LLM_MODEL in .env is llama-3.3-70b-versatile, we focus on Groq.
+            # NOTE: Gemini also supports OpenAI compatible endpoints natively now.
             self.base_url = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
             self.api_key = self.gemini_api_key
 
