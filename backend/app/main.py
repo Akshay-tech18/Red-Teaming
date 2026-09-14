@@ -40,6 +40,7 @@ from app.api.traces import router as traces_router
 from app.api.findings import router as findings_router
 from app.api.versions import router as versions_router
 from app.api.regression import router as regression_router
+from app.api.chat import router as chat_router
 
 app.include_router(agents_router, prefix=settings.API_V1_STR)
 app.include_router(attacks_router, prefix=settings.API_V1_STR)
@@ -48,6 +49,7 @@ app.include_router(traces_router, prefix=settings.API_V1_STR)
 app.include_router(findings_router, prefix=settings.API_V1_STR)
 app.include_router(versions_router, prefix=settings.API_V1_STR)
 app.include_router(regression_router, prefix=settings.API_V1_STR)
+app.include_router(chat_router, prefix=f"{settings.API_V1_STR}/chat")
 
 @app.get("/")
 async def root():

@@ -103,32 +103,42 @@ export default function AICoPilotDrawer({
     setInputPrompt('');
 
     // Context-aware intelligent response
-    setTimeout(() => {
-      let replyText = `I've analyzed your question relative to the active tab (${currentView.toUpperCase()}) and version (${currentVersion}).`;
-      
-      const q = query.toLowerCase();
-      if (q.includes('authority') || q.includes('director') || q.includes('vance')) {
-        replyText = "In authority spoofing attacks (like A-001 and A-003), the user claims an executive persona ('Regional Director Dr. Vance'). In v1.0, the LLM complies because it has no verification gate. In v1.1, the `@enforce_policy('P-001')` decorator checks `session.order_verified == True` and halts the call regardless of what the user claims.";
-      } else if (q.includes('p-001') || q.includes('c-001') || q.includes('refund')) {
-        replyText = "Policy P-001 requires order verification before issuing any refund. Constraint C-001 is a DETERMINISTIC rule: `order_verification_state[order_id] == VERIFIED`. If the tool `verify_order()` was not executed, `issue_refund()` is blocked with an immediate POLICY_INTERCEPT.";
-      } else if (q.includes('pii') || q.includes('c-004') || q.includes('customer') || q.includes('tenant')) {
-        replyText = "Policy P-003 and Constraint C-004 isolate customer records. When an attacker logged in as CUST-001 asks for CUST-002, the deterministic session guard intercepts the query because `requested_id != authenticated_customer_id`.";
-      } else if (q.includes('threat') || q.includes('fork') || q.includes('tree')) {
-        replyText = "In Step 03 (Decision Tree), you can see the exact fork: Path A has no precondition gate, allowing the model to debit the $500 store ledger. Path B introduces code-level precondition enforcement which intercepts the unauthorized call.";
-      } else if (q.includes('trace') || q.includes('verdict') || q.includes('execution')) {
-        replyText = "In Step 05 (Live Run & Traces), the deterministic evaluator inspects the execution events. Event #4 shows the violation alert when `issue_refund` was called while `order_verification_state` was `NOT_VERIFIED`.";
-      } else if (q.includes('regression')) {
-        replyText = "In Step 06 (Regression Suite), we verify that fixing one attack doesn't break other benign flows. A test is flagged with a red REGRESSION banner if a previously blocked exploit suddenly succeeds on a newer agent build.";
+    const fetchReply = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/v1/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: query,
+            context: {
+              view: currentView,
+              version: currentVersion?.version_label,
+              attack: activeAttack?.id
+            }
+          })
+        });
+        
+        const data = await response.json();
+        
+        const botReply = {
+          id: `msg-${Date.now() + 1}`,
+          sender: 'assistant',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          text: data.reply
+        };
+        setMessages((prev) => [...prev, botReply]);
+      } catch (error) {
+        const errorReply = {
+          id: `msg-${Date.now() + 1}`,
+          sender: 'assistant',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          text: "Sorry, I couldn't connect to the backend LLM service."
+        };
+        setMessages((prev) => [...prev, errorReply]);
       }
-
-      const botReply = {
-        id: `msg-${Date.now() + 1}`,
-        sender: 'assistant',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        text: replyText
-      };
-      setMessages((prev) => [...prev, botReply]);
-    }, 450);
+    };
+    
+    fetchReply();
   };
 
   if (!isOpen) return null;
