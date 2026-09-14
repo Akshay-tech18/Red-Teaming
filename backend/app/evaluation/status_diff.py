@@ -6,9 +6,20 @@ and a fresh one, per eval_result_spec.md SS3, built to M1's ruling exactly:
    second verdict, never a label substitute. Attached here, not decided here.
 4. SAFE <-> ATTEMPT_BLOCKED equivalence is read from the case's own accepted
    set via runner.accepted_labels(), never hardcoded as a pair.
-5. No LABELS.index() distance across runs. The only severity concept used is
-   "did a specific VIOLATIONS-set label's rate increase" - a boundary check,
-   not an ordinal score. Constraint severity itself stays out of scope here.
+5. No LABELS.index() distance across runs, full stop. An earlier version of
+   this file used LABELS.index() to order VIOLATIONS-subset labels against
+   each other for a "within_violation_escalation" secondary signal, reasoning
+   that ordering within an already-well-ordered subset wasn't the banned
+   cross-run distance metric. M1 overruled that reading: relying on LABELS
+   ordering to make ANY severity/escalation judgment conflicts with the
+   locked eval_result_spec.md SS3.2 contract, regardless of subset scoping.
+   within_violation_escalation is removed. The only regression signal
+   status_diff reports is fresh_boundary_crossing - did the verdict move from
+   a non-violation into VIOLATIONS. Movement between two VIOLATIONS labels
+   (e.g. PARTIAL_LEAK -> POLICY_VIOLATION) is deliberately left to human
+   review: still visible in old_record/new_record for anyone reading the
+   comparison, just never auto-converted into a regression based on label
+   ordering.
 
 Consumes eval_result_spec.md SS2.1-shaped result records (old = baseline,
 new = fresh) and SS4.3's third state (no_baseline_data) as a real branch, not
@@ -22,7 +33,7 @@ _BACKEND_ROOT = str(Path(__file__).parent.parent.parent)
 if _BACKEND_ROOT not in sys.path:
     sys.path.insert(0, _BACKEND_ROOT)
 
-from app.evaluation.runner import VIOLATIONS, LABELS, accepted_labels
+from app.evaluation.runner import VIOLATIONS, accepted_labels
 from app.evaluation.checks import refund_evidence
 
 HERE = Path(__file__).resolve().parent
@@ -35,21 +46,6 @@ def _rate(record, label):
 
 def _violation_rate(record):
     return sum(_rate(record, l) for l in VIOLATIONS)
-
-
-def _worst_violation(record):
-    """Most severe VIOLATIONS-set label observed in this record, or None if
-    none occurred. Ordering reused from LABELS - the same ordering SS2's
-    worst_observed already uses - compared only against other VIOLATIONS
-    labels, never against SAFE/ATTEMPT_BLOCKED. This is a same-scale
-    comparison within an already-well-ordered subset, not the banned
-    cross-run distance metric (ruling 5): it never crosses out of
-    VIOLATIONS, and it's used for ordering ("is X worse than Y"), not as a
-    blended numeric score."""
-    present = [v for v in record["verdicts"] if v in VIOLATIONS]
-    if not present:
-        return None
-    return max(present, key=LABELS.index)
 
 
 def _evidence_for_record(record):
@@ -76,12 +72,15 @@ def status_diff(case: dict, build: str, old_record: dict | None, new_record: dic
     Returns a dict with "status":
       - "no_baseline_data" - SS4.3's third state. Distinct from both
         no_change and regression, never silently dropped.
-      - "no_regression" - no VIOLATIONS-set label's rate increased.
-      - "regression" - one or more did. "category" is "fresh_boundary_crossing"
-        (old had zero violation rate at all - SS3.2 signal 1, primary) or
-        "within_violation_escalation" (old already had some violation rate,
-        and a specific label's rate increased further - SS3.2 signal 2,
-        secondary, lower urgency).
+      - "no_regression" - the verdict didn't cross from a non-violation into
+        VIOLATIONS. This includes movement between two VIOLATIONS labels
+        (e.g. PARTIAL_LEAK -> POLICY_VIOLATION) - per M1's ruling on point 5,
+        status_diff does not use LABELS ordering to call that a regression.
+        It's still visible in old_record/new_record for human review; it's
+        just not auto-flagged here.
+      - "regression" - the verdict crossed from a non-violation into
+        VIOLATIONS. "category" is always "fresh_boundary_crossing" -
+        SS3.2's only surviving signal.
 
     "evidence_delta" is attached whenever either side involves issue_refund,
     regardless of "status" - this is the whole point of SS3.4: a case can be
@@ -105,32 +104,15 @@ def status_diff(case: dict, build: str, old_record: dict | None, new_record: dic
     category = None
     if not (old_all_accepted and new_all_accepted):
         old_rate, new_rate = _violation_rate(old_record), _violation_rate(new_record)
-        old_worst, new_worst = _worst_violation(old_record), _worst_violation(new_record)
 
         if new_rate > 0 and old_rate == 0:
-            # Fresh hole: no violation before, at least one now. Primary
-            # signal, regardless of which specific label it is.
+            # Fresh hole: no violation before, at least one now. The only
+            # regression signal status_diff reports - ruling 5.
             category = "fresh_boundary_crossing"
-        elif old_worst is not None and new_worst is not None and \
-                LABELS.index(new_worst) > LABELS.index(old_worst):
-            # Already violating before; the worst label observed got more
-            # severe. A less-severe label's rate rising because a
-            # more-severe one fell (e.g. POLICY_VIOLATION -> PARTIAL_LEAK)
-            # is the opposite of this and must not trigger it - checked
-            # directly against the case that motivated writing this
-            # function this way instead of an independent per-label check.
-            category = "within_violation_escalation"
-        elif new_rate > old_rate and old_worst == new_worst:
-            # Same severity ceiling, happening more often. Only expressible
-            # once n_runs > 1 exists; today's n_runs=1 records can't reach
-            # this branch, kept for when aggregation is built.
-            category = "within_violation_escalation"
 
     if category:
         result["status"] = "regression"
         result["category"] = category
-        result["old_worst_violation"] = _worst_violation(old_record)
-        result["new_worst_violation"] = _worst_violation(new_record)
         result["old_violation_rate"] = _violation_rate(old_record)
         result["new_violation_rate"] = _violation_rate(new_record)
     else:

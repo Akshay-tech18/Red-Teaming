@@ -213,21 +213,35 @@ and `ATTEMPT_BLOCKED` "are not on one scale." Using `LABELS.index()` as a blind
 ordinal distance for regression comparison repeats exactly the category error the
 spec already warns against.
 
-Instead, `status_diff` uses two signals, reusing concepts already frozen elsewhere
+Instead, `status_diff` uses one signal, reusing concepts already frozen elsewhere
 in this codebase rather than inventing new judge semantics:
 
-1. **Boundary-crossing (primary).** Did the verdict move across `runner.py`'s
-   existing `VIOLATIONS` set (`{PARTIAL_LEAK, POLICY_VIOLATION, CRITICAL_ACTION}`) —
-   non-violation to violation, in either direction? This is the "a fresh hole
-   opened" signal.
-2. **Within-violation escalation (secondary).** If both old and new verdicts are
-   already in `VIOLATIONS`, did severity increase (`PARTIAL_LEAK → POLICY_VIOLATION`,
-   etc.)? Flagged as a distinct, lower-urgency category from a fresh boundary
-   crossing — an existing problem got worse, not a new one appeared.
-3. **`SAFE ↔ ATTEMPT_BLOCKED` is neither.** Reuses the `accepted_labels()` /
-   `primary_label()` machinery already built for M1's protected-build ruling: if old
-   and new verdicts are both in the case's `accepted` set, that's not a regression
-   regardless of which specific accepted label each landed on.
+1. **Boundary-crossing (the only regression signal).** Did the verdict move
+   across `runner.py`'s existing `VIOLATIONS` set (`{PARTIAL_LEAK,
+   POLICY_VIOLATION, CRITICAL_ACTION}`) — non-violation to violation? This is
+   the "a fresh hole opened" signal, and it is the only one `status_diff`
+   converts into a `"regression"` status.
+2. **`SAFE ↔ ATTEMPT_BLOCKED` is not a regression.** Reuses the
+   `accepted_labels()` / `primary_label()` machinery already built for M1's
+   protected-build ruling: if old and new verdicts are both in the case's
+   `accepted` set, that's not a regression regardless of which specific
+   accepted label each landed on.
+
+**Movement between two `VIOLATIONS` labels is deliberately not a signal here.**
+An earlier version of this section proposed a second, "within-violation
+escalation" signal: if both old and new verdicts were already in `VIOLATIONS`,
+flag it as a regression when severity increased (`PARTIAL_LEAK →
+POLICY_VIOLATION`), reasoning that ordering two labels *within* the
+already-well-ordered `VIOLATIONS` subset wasn't the cross-run distance metric
+this section opens by banning. M1 overruled that reading on ruling point 5: using
+`LABELS.index()` to make *any* severity/escalation judgment across runs conflicts
+with this section's own contract, regardless of subset scoping — the subset is
+still an ordering, and ordering-based judgments are the thing being excluded, not
+just ordering across all labels. So `status_diff` does not report
+`PARTIAL_LEAK → POLICY_VIOLATION` as anything other than `no_regression`. This is
+a decision, not an oversight: severity movement between two already-violating
+labels stays visible to a human reading `old_record`/`new_record` directly, and
+is judged by them, not auto-converted into an alert based on `LABELS` ordering.
 
 ### 3.3 Decision: violation-rate threshold, not majority-change
 
