@@ -3,7 +3,6 @@ from typing import Optional, Dict, Any
 from pydantic import BaseModel
 
 class TraceEventBase(BaseModel):
-    event_id: str
     type: str
     timestamp: datetime
     role: str

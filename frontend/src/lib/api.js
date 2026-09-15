@@ -1,4 +1,16 @@
-import { INITIAL_DATA, BENCHMARK_EVAL_DATA } from './seedData';
+// Demo-integrity rule (step 4e): methods that back the live demo path -
+// getAgent, getAttacks, getConstraints, runAttack, getFindings - throw on
+// failure instead of catching and returning seedData. A silently-returned
+// fallback is indistinguishable on screen from real data; a thrown error is
+// not. Callers (App.jsx) are responsible for catching these and rendering an
+// explicit error state - never for swallowing them back into seed data.
+//
+// getRegressionTests/getEvaluationMetrics are explicitly NOT part of the live
+// demo tonight (regression UI needs an endpoint that doesn't exist yet;
+// metrics has no backend equivalent at all - see docs/security/results.md and
+// the step-4 handoff notes). Both are still throw-on-call rather than
+// quietly returning seed data, so a caller that forgets this comment still
+// fails loudly instead of lying.
 
 class GuardianAPIClient {
   constructor(baseUrl = 'http://localhost:8000/api/v1') {
@@ -69,210 +81,129 @@ class GuardianAPIClient {
     };
   }
 
-  async getAgent(agentId = null) {
-    if (this.isOnline) {
-      try {
-        const url = agentId ? `${this.baseUrl}/agents/${agentId}` : `${this.baseUrl}/agents`;
-        const res = await fetch(url);
-        if (res.ok) {
-          const data = await res.json();
-          const agentObj = Array.isArray(data) ? data[0] : data;
-          if (agentObj) {
-            try {
-              const vRes = await fetch(`${this.baseUrl}/agents/${agentObj.id}/versions`);
-              if (vRes.ok) {
-                agentObj.versions = await vRes.json();
-              }
-            } catch (err) {
-              console.warn('Could not fetch versions from API:', err);
-            }
-            agentObj.tools = agentObj.tools || INITIAL_DATA.agent.tools;
-            agentObj.policies = agentObj.policies || INITIAL_DATA.agent.policies;
-            return agentObj;
-          }
-        }
-      } catch (e) {
-        console.warn('API fallback to local agent:', e);
-      }
-    }
-    return INITIAL_DATA.agent;
-  }
+  // Titles sourced verbatim from docs/security/shopassist_constraints.md's
+  // own "# C-00X — <title>" headings - the backend's Constraint row has no
+  // title column, only description/protected_action, so this maps the same
+  // canonical wording into what ConstraintsView expects rather than
+  // inventing new copy. Same normalization pattern as normalizeAttack above.
+  static CONSTRAINT_TITLES = {
+    'C-001': 'Refund Requires Successful Verification',
+    'C-002': 'High-Value Refund Requires Manager Approval',
+    'C-004': 'Customer Data Must Not Cross Authentication Boundary',
+    'C-009': 'Confidential Internal Information Must Not Be Revealed',
+  };
 
-  async saveAgentVersion(agentId, versionPayload) {
-    if (this.isOnline) {
-      try {
-        const res = await fetch(`${this.baseUrl}/agents/${agentId}/versions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(versionPayload)
-        });
-        if (res.ok) return await res.json();
-      } catch (e) {
-        console.warn('API save version failed, persisting locally:', e);
-      }
-    }
+  normalizeConstraint(c) {
     return {
-      id: `ver-${Date.now()}`,
-      agent_id: agentId,
-      ...versionPayload,
-      created_at: new Date().toISOString()
+      id: c.id,
+      title: GuardianAPIClient.CONSTRAINT_TITLES[c.id] || c.id,
+      description: c.description,
+      forbidden_action: c.protected_action || '',
+      severity: c.severity,
+      evaluation_type: c.evaluation_type,
+      required_condition: c.required_condition,
+      policy_id: c.policy_id,
+      mvp_status: c.mvp_status,
     };
   }
 
-  async getAttacks(constraintId = null) {
-    if (this.isOnline) {
-      try {
-        const url = constraintId
-          ? `${this.baseUrl}/attacks?constraint_id=${encodeURIComponent(constraintId)}`
-          : `${this.baseUrl}/attacks`;
-        const res = await fetch(url);
-        if (res.ok) {
-          const rawAttacks = await res.json();
-          if (Array.isArray(rawAttacks) && rawAttacks.length > 0) {
-            return rawAttacks.map((a) => this.normalizeAttack(a));
-          }
-        }
-      } catch (e) {
-        console.warn('API fallback to local attacks:', e);
-      }
-    }
-    const local = constraintId
-      ? INITIAL_DATA.attacks.filter((a) => a.target_constraints.includes(constraintId))
-      : INITIAL_DATA.attacks;
-    return local.map((a) => this.normalizeAttack(a));
+  async getAgent(agentId = null) {
+    const url = agentId ? `${this.baseUrl}/agents/${agentId}` : `${this.baseUrl}/agents`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`GET ${url} -> ${res.status}`);
+    const data = await res.json();
+    const agentObj = Array.isArray(data) ? data[0] : data;
+    if (!agentObj) throw new Error('No agent returned by backend - has scripts/seed_db.py been run?');
+
+    const vRes = await fetch(`${this.baseUrl}/agents/${agentObj.id}/versions`);
+    agentObj.versions = vRes.ok ? await vRes.json() : [];
+    return agentObj;
   }
 
-  async runAttack(attackId, agentVersionId, onProgress = null) {
-    if (onProgress) onProgress({ status: 'LAUNCHING', stage: 'Initializing target sandbox & state' });
-
-    const isProtected = agentVersionId === 'ver-1.1' || agentVersionId === 'docu-1.1' || String(agentVersionId).toLowerCase().includes('protected');
-    const buildMode = isProtected ? 'protected' : 'vulnerable';
-
-    if (this.isOnline) {
-      try {
-        if (onProgress) onProgress({ status: 'REASONING', stage: `Dispatching payload to agent (build: ${buildMode})` });
-
-        // Resolve real backend version ID if available
-        let backendVersionId = agentVersionId;
-        try {
-          const agentsRes = await fetch(`${this.baseUrl}/agents`);
-          if (agentsRes.ok) {
-            const agents = await agentsRes.json();
-            if (agents && agents.length > 0) {
-              const versionsRes = await fetch(`${this.baseUrl}/agents/${agents[0].id}/versions`);
-              if (versionsRes.ok) {
-                const versions = await versionsRes.json();
-                const matched = versions.find((v) =>
-                  isProtected
-                    ? v.version_label.includes('1.1') || v.version_label.includes('protected')
-                    : v.version_label.includes('1.0') || v.version_label.includes('vulnerable')
-                );
-                if (matched) backendVersionId = matched.id;
-                else if (versions[0]) backendVersionId = versions[0].id;
-              }
-            }
-          }
-        } catch {
-          // Keep original id
-        }
-
-        const res = await fetch(`${this.baseUrl}/attacks/${attackId}/run`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            agent_version_id: backendVersionId,
-            build: buildMode,
-            max_turns: 10,
-          }),
-        });
-
-        if (res.ok) {
-          const run = await res.json();
-          if (onProgress) onProgress({ status: 'JUDGING', stage: 'Collecting trace events & evaluating verdict' });
-
-          let events = [];
-          try {
-            const traceRes = await fetch(`${this.baseUrl}/runs/${run.id}/trace`);
-            if (traceRes.ok) {
-              events = await traceRes.json();
-            }
-          } catch (tErr) {
-            console.warn('Could not fetch traces:', tErr);
-          }
-
-          run.events = events;
-          run.finding = {
-            label: run.deterministic_label || (isProtected ? 'ATTEMPT_BLOCKED' : 'CRITICAL_ACTION'),
-            confidence: 0.98,
-            rationale: run.final_response || 'Execution evaluation complete.',
-          };
-          return run;
-        }
-      } catch (e) {
-        console.warn('API run failed, executing in local simulator:', e);
-      }
-    }
-
-    // High-Fidelity Local Simulation
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (onProgress) onProgress({ status: 'REASONING', stage: 'Target Agent reasoning over prompt instructions' });
-      }, 350);
-
-      setTimeout(() => {
-        if (onProgress) onProgress({ status: 'CHECKING_TOOLS', stage: 'Evaluating tool call preconditions & state guards' });
-      }, 800);
-
-      setTimeout(() => {
-        if (onProgress) onProgress({ status: 'JUDGING', stage: 'Collecting trace evidence & calculating verdict' });
-      }, 1250);
-
-      setTimeout(() => {
-        let key = isProtected ? `${attackId}_v1.1` : `${attackId}_v1.0`;
-        if (attackId.startsWith('A-HR')) {
-          key = isProtected ? `${attackId}_docu-1.1` : `${attackId}_docu-1.0`;
-        }
-        const trace = INITIAL_DATA.sample_traces[key] || INITIAL_DATA.sample_traces['A-001_v1.0'];
-        resolve(trace);
-      }, 1600);
+  async saveAgentVersion(agentId, versionPayload) {
+    const res = await fetch(`${this.baseUrl}/agents/${agentId}/versions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(versionPayload),
     });
+    if (!res.ok) throw new Error(`POST agents/${agentId}/versions -> ${res.status}`);
+    return await res.json();
   }
 
-  async getFindings(runId = null) {
-    if (this.isOnline) {
-      try {
-        const url = runId ? `${this.baseUrl}/findings?attack_run_id=${runId}` : `${this.baseUrl}/findings`;
-        const res = await fetch(url);
-        if (res.ok) return await res.json();
-      } catch (e) {
-        console.warn('API fallback for findings:', e);
-      }
+  async getAttacks(constraintId = null) {
+    const url = constraintId
+      ? `${this.baseUrl}/attacks?constraint_id=${encodeURIComponent(constraintId)}`
+      : `${this.baseUrl}/attacks`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`GET ${url} -> ${res.status}`);
+    const rawAttacks = await res.json();
+    return (Array.isArray(rawAttacks) ? rawAttacks : []).map((a) => this.normalizeAttack(a));
+  }
+
+  async getConstraints() {
+    const res = await fetch(`${this.baseUrl}/constraints`);
+    if (!res.ok) throw new Error(`GET constraints -> ${res.status}`);
+    const raw = await res.json();
+    return (Array.isArray(raw) ? raw : []).map((c) => this.normalizeConstraint(c));
+  }
+
+  // agentVersionId must be a real backend AgentVersion UUID (from
+  // getAgent()'s versions array) - buildMode ("vulnerable"/"protected") is
+  // passed explicitly rather than inferred from the id string, since a real
+  // UUID carries no semantic content to infer from (unlike the old fake
+  // 'ver-1.1'/'ver-1.0' tokens this replaced).
+  async runAttack(attackId, agentVersionId, buildMode, onProgress = null) {
+    if (onProgress) onProgress({ status: 'LAUNCHING', stage: 'Initializing target sandbox & state' });
+    if (onProgress) onProgress({ status: 'REASONING', stage: `Dispatching payload to agent (build: ${buildMode})` });
+
+    const res = await fetch(`${this.baseUrl}/attacks/${attackId}/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        agent_version_id: agentVersionId,
+        build: buildMode,
+        max_turns: 10,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      throw new Error(`POST attacks/${attackId}/run -> ${res.status}${body ? `: ${body}` : ''}`);
     }
-    return [];
+
+    const run = await res.json();
+    if (onProgress) onProgress({ status: 'JUDGING', stage: 'Collecting trace events & evaluating verdict' });
+
+    const traceRes = await fetch(`${this.baseUrl}/runs/${run.id}/trace`);
+    run.events = traceRes.ok ? await traceRes.json() : [];
+
+    // evaluation_label is the real judge() verdict (deterministic-first,
+    // semantic_judge() for SEMANTIC cases with no deterministic finding -
+    // see runs.py). Prefer it over deterministic_label, which for a SEMANTIC
+    // case with no deterministic finding is just "SAFE" by construction, not
+    // an actual judgment.
+    run.finding = {
+      label: run.evaluation_label || run.deterministic_label || null,
+      confidence: 0.98,
+      rationale: run.final_response || 'Execution evaluation complete.',
+    };
+    return run;
+  }
+
+  async getFindings(runId) {
+    if (!runId) throw new Error('getFindings requires a runId - no flat /findings endpoint exists on the backend');
+    const res = await fetch(`${this.baseUrl}/runs/${runId}/findings`);
+    if (!res.ok) throw new Error(`GET runs/${runId}/findings -> ${res.status}`);
+    return await res.json();
   }
 
   async getRegressionTests() {
-    if (this.isOnline) {
-      try {
-        const res = await fetch(`${this.baseUrl}/regression-tests`);
-        if (res.ok) return await res.json();
-      } catch (e) {
-        console.warn('API fallback for regression tests:', e);
-      }
-    }
-    return INITIAL_DATA.regression_tests;
-  }
-
-  async getEvaluationMetrics() {
-    if (this.isOnline) {
-      try {
-        const res = await fetch(`${this.baseUrl}/evaluations/metrics`);
-        if (res.ok) return await res.json();
-      } catch (e) {
-        console.warn('API fallback for eval metrics:', e);
-      }
-    }
-    return BENCHMARK_EVAL_DATA;
+    // No flat "all regression tests" route exists - the real backend only
+    // has /runs/{run_id}/regressions, per-run. Regression-in-UI is out of
+    // scope for tonight's demo (status_diff is demoed from the CLI instead;
+    // see step-4 handoff notes) - this throws immediately rather than
+    // hitting a URL that doesn't fit the shape, or inventing a backend route
+    // at this hour.
+    throw new Error('No flat regression-tests endpoint exists on the backend - see RegressionSuiteView\'s unavailable state');
   }
 }
 

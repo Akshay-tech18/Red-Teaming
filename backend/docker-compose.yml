@@ -1,0 +1,28 @@
+# Reproduces the Postgres instance the backend actually runs against. Prior
+# to this file, that instance existed only as an ad hoc `docker run` (container
+# name backend-db-1) with no record of how it was started or what its
+# credentials were - anyone else checking out this repo had no way to stand
+# one up themselves. Port 5433 (not Postgres' default 5432) because
+# config.py's DATABASE_URL default assumes 5432 is something else on this
+# machine; nothing enforces that assumption, it's just what the existing
+# container happened to use.
+#
+# Usage: `docker compose up -d`, then from backend/: `.venv/bin/alembic upgrade head`.
+# Credentials here match .env's DATABASE_URL - if you change one, change both.
+
+services:
+  db:
+    image: postgres:14
+    container_name: backend-db-1
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: prisma_user
+      POSTGRES_PASSWORD: prisma_password
+      POSTGRES_DB: prisma_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - backend_db_data:/var/lib/postgresql/data
+
+volumes:
+  backend_db_data:

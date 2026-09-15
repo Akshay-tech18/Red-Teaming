@@ -40,11 +40,20 @@ def _load_cache() -> dict:
 def _save_cache(cache: dict) -> None:
     CACHE_FILE.write_text(json.dumps(cache, indent=2, sort_keys=True) + "\n")
 
+# Never cache (or serve from cache) an "ERROR:"-prefixed response - a 429 or
+# other API failure recorded as final_response is not a verdict on anything,
+# and matching on it by exact text previously let 109/169 cache entries cache
+# SAFE for rate-limit error strings, a landmine for any future run that hits
+# the same error (results.md S1.5).
 def cache_get(provider: str, model: str, version: str, text: str):
+    if text.startswith("ERROR:"):
+        return None
     cache = _load_cache()
     return cache.get(provider, {}).get(model, {}).get(version, {}).get(text)
 
 def cache_set(provider: str, model: str, version: str, text: str, label: str) -> None:
+    if text.startswith("ERROR:"):
+        return
     cache = _load_cache()
     cache.setdefault(provider, {}).setdefault(model, {}).setdefault(version, {})[text] = label
     _save_cache(cache)

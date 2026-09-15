@@ -1,18 +1,23 @@
 import React, { useState } from 'react';
-import { 
+import {
   ChevronRight,
   Settings,
   FileCheck2,
   GitFork,
   Crosshair,
   Activity,
-  GitCompare,
-  BarChart3
+  GitCompare
 } from 'lucide-react';
 
 export default function PipelineStepper({ currentView, setView }) {
   const [hoveredStepId, setHoveredStepId] = useState(null);
 
+  // "Judge Metrics" (step 07) removed for the demo build: it called
+  // /evaluations/metrics, which has no backend equivalent at all (not a bug
+  // to fix, there's nothing to point it at). A dead step in a numbered
+  // pipeline is worse on camera than one fewer step - see step-4 handoff
+  // notes for the alternative considered (leave it in place with an
+  // unavailable banner).
   const steps = [
     { id: "config", num: "01", label: "Understand Config", icon: Settings },
     { id: "constraints", num: "02", label: "Derive Constraints", icon: FileCheck2 },
@@ -20,7 +25,6 @@ export default function PipelineStepper({ currentView, setView }) {
     { id: "attacks", num: "04", label: "Targeted Attacks", icon: Crosshair },
     { id: "execution", num: "05", label: "Judge & Traces", icon: Activity },
     { id: "compare", num: "06", label: "Fix & Regression", icon: GitCompare },
-    { id: "metrics", num: "07", label: "Judge Metrics", icon: BarChart3 },
   ];
 
   return (

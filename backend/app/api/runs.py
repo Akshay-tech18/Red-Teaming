@@ -3,7 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List
 import copy
+import json
 import uuid
+from pathlib import Path
 from datetime import datetime, timezone
 
 from app.core.db import get_db
@@ -15,8 +17,16 @@ from app.schemas.run import RunStartRequest, AttackRunRead
 from app.agents.shopassist.agent import LLMClient
 from app.execution.state_machine import run_agent_loop, MaxTurnsReachedError
 from app.tracing.collector import TraceCollector
+from app.evaluation.runner import judge
 
 router = APIRouter(tags=["Runs"])
+
+# Same fixtures.json runner.py scores against - not a copy, not a
+# transformation, the file itself. Loaded once at import time: it's static
+# evaluation-corpus data (frozen for tonight per the demo-prep constraints),
+# not something a live request should be re-reading off disk.
+_FIXTURES_PATH = Path(__file__).resolve().parents[2] / "app" / "evaluation" / "fixtures.json"
+_WORLD = json.loads(_FIXTURES_PATH.read_text())
 
 @router.post("/attacks/{attack_id}/run", response_model=AttackRunRead, status_code=status.HTTP_201_CREATED)
 async def run_attack(attack_id: str, run_req: RunStartRequest, db: AsyncSession = Depends(get_db)):
@@ -79,18 +89,36 @@ async def run_attack(attack_id: str, run_req: RunStartRequest, db: AsyncSession 
         # Call real deterministic checks from the evaluation layer
         from app.evaluation.checks import deterministic_checks, most_severe
         
-        # Convert ORM events to dicts as expected by checks.py
+        # Convert ORM events to dicts as expected by checks.py. state_before/
+        # state_after were missing here (pre-existing, found while wiring
+        # evaluation_label below): check_c001/check_c002 read
+        # event["state_before"] directly, not .get(), so any refund/approval
+        # case KeyErrors before ever reaching a verdict - this path had never
+        # actually been run end-to-end before tonight.
         event_dicts = []
         for e in collector.events:
             event_dicts.append({
                 "type": e.type,
                 "tool": e.tool,
                 "arguments": e.arguments or {},
-                "result": e.result or {}
+                "result": e.result or {},
+                "state_before": e.state_before,
+                "state_after": e.state_after,
             })
             
         findings = deterministic_checks(event_dicts)
         db_run.deterministic_label = most_severe(findings)
+
+        # Same judge the offline harness scores with - deterministic first,
+        # semantic_judge() only reached for SEMANTIC cases with no
+        # deterministic finding (runner.judge()'s own routing, not
+        # reimplemented here). evaluation_type comes from the seeded case's
+        # metadata_info (attacks_seed.json's own field, untouched by the
+        # seeding step) - judge() itself takes only evaluation_type, never
+        # the case object, so nothing beyond that one string crosses in.
+        evaluation_type = (attack.metadata_info or {}).get("evaluation_type", "DETERMINISTIC")
+        judge_result = {"events": event_dicts, "final_response": final_text}
+        db_run.evaluation_label = judge(evaluation_type, judge_result, _WORLD)
 
     except Exception as e:
         db_run.status = "ERROR"

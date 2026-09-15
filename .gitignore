@@ -4,3 +4,12 @@ __pycache__/
 .env
 backend/app/extraction/extraction_runs.jsonl
 CONTEXT.md
+
+# Machine-local judge-call cache. Demonstrated able to silently hold a wrong,
+# confident answer (109/169 entries once cached SAFE for 429 error text,
+# results.md S1.5) - sharing it between machines/sessions means a "verdict"
+# in someone's results could actually be a stale or poisoned cache hit from
+# a different machine's history, with no way to tell. Guards now prevent new
+# error-text poisoning (semantic.py cache_get/cache_set), but the file stays
+# local-only rebuildable scratch state, not something to commit.
+backend/app/evaluation/semantic_cache.json
